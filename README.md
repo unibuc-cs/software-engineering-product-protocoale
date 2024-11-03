@@ -17,10 +17,9 @@ Consumers seeking to save time and money by easily comparing prices of essential
 ## WHO
 Need a quick and efficient solution to find the best prices for their desired products and locate nearby physical stores.
 
-## The **(Product Name)** is a...
+## The **ShopSmart** is a...
 A price comparison and shopping list management platform integrated with Google Maps.
 
-> **Note**: We’ll need to brainstorm a name for the app.
 
 ## THAT
 Provides users with the ability to:
