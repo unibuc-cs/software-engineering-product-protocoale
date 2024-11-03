@@ -7,7 +7,7 @@
 - **Voinescu David-Ioan**
 - **Ghena-Ionescu Alexandru**
 - **Uta Mario Ernest**
-- **Milosi Elias Fernando**
+- **Milosi Elias**
 
 ## **User Stories**
 
