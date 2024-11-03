@@ -9,66 +9,32 @@
 - **Uta Mario Ernest**
 - **Milosi Elias**
 
-## **User Stories**
+# Product Vision
 
-1. **Căutare produse disponibile la magazine**
-   - **Descriere:** Ca utilizator, vreau să pot vedea toate produsele de un anumit tip disponibile la diverse magazine, astfel încât să pot alege cel mai potrivit magazin pentru a cumpăra produsul dorit.
+## FOR
+Consumers seeking to save time and money by easily comparing prices of essential groceries (such as water, bread, milk, juice) across various shopping platforms.
 
-2. **Sortare produse după cantitate**
-   - **Descriere:** Ca utilizator, vreau să pot vedea toate produsele de un tip disponibile la magazine sortate după cantitate, atât în ordine crescătoare cât și descrescătoare, astfel încât să pot găsi rapid produsele care îndeplinesc nevoile mele cantitative.
+## WHO
+Need a quick and efficient solution to find the best prices for their desired products and locate nearby physical stores.
 
-3. **Sortare produse după preț**
-   - **Descriere:** Ca utilizator, vreau să pot vedea toate produsele de un tip disponibile la magazine sortate după preț, astfel încât să pot alege cel mai ieftin produs disponibil.
+## The **(Product Name)** is a...
+A price comparison and shopping list management platform integrated with Google Maps.
 
-4. **Sortare produse în ordine alfabetică**
-   - **Descriere:** Ca utilizator, vreau să pot vedea produsele în ordine alfabetică, astfel încât să găsesc mai ușor un anumit produs pe care îl caut.
+> **Note**: We’ll need to brainstorm a name for the app.
 
-5. **Vizualizare magazin cel mai apropiat**
-   - **Descriere:** Ca utilizator, vreau să pot vedea unde se află cel mai apropiat magazin care are produsele pe care le doresc, astfel încât să pot economisi timp și efort.
+## THAT
+Provides users with the ability to:
+- Compare prices for their preferred products across multiple online supermarkets.
+- Create a personalized shopping or wish list.
+- Find the closest physical store for immediate purchases.
 
-6. **Detalii rută și durată până la magazin**
-   - **Descriere:** Ca utilizator, vreau să văd care este durata, ruta și modurile în care pot ajunge la magazinul dorit, astfel încât să pot planifica eficient drumul meu.
+## UNLIKE
+**Other platforms**, which focuses on home delivery from a single retailer, our app empowers users by allowing:
+- **Cross-platform price comparison** for enhanced choice and flexibility.
+- **Multiple purchase options** — online shopping or visiting nearby physical stores for in-person shopping.
 
-7. **Setare locație personalizată**
-   - **Descriere:** Ca utilizator, vreau să pot seta o locație personalizată, astfel încât să pot vedea rutele și magazinele disponibile în funcție de acea locație, indiferent de locul în care mă aflu.
+## OUR PRODUCT
+Our app stands out with its:
+- **Personalized, accessible, and integrated shopping experience** tailored to user preferences.
+- Automated price comparisons and location-based recommendations to help users save time and money.
 
-8. **Construire coș de cumpărături**
-   - **Descriere:** Ca utilizator, vreau să pot construi un coș de cumpărături și să văd produsele de acest tip disponibile la fiecare magazin, astfel încât să pot compara opțiunile și alege cea mai bună ofertă.
-
-9. **Calcul cel mai ieftin coș de cumpărături**
-   - **Descriere:** Ca utilizator, vreau să văd cel mai ieftin coș de cumpărături pentru fiecare magazin, incluzând prețul total al coșului, astfel încât să pot face achiziții economice.
-
-10. **Alegerea cantităților pentru coșul de cumpărături**
-    - **Descriere:** Ca utilizator, vreau să pot alege cantitatea pentru fiecare obiect din coșul de cumpărături, astfel încât să pot personaliza achizițiile în funcție de nevoile mele.
-
----
-
-## **Backlog**
-
-1. **Integrarea API-urilor pentru geo-localizare și prețuri produse**
-   - **Descriere:** Implementarea integrării cu API-uri care oferă date de geo-localizare automate pentru utilizator.
-  
-2. **Integrarea unei locații custom**
-   - **Descriere:** Adăugarea opțiunii pentru utilizator de a putea selecta din ce locație dorește să fie calculate rutele către magazine.
-  
-3. **Integrarea completă a hărților**
-   - **Descriere:** Adăugarea unor butoane ce lasă utilizatorul să își selecteze modul de transport dorit și afișarea rutei împreună cu timpul estimat.
-  
-4. **Adăugarea web-crawlers**
-   - **Descriere:** Implementarea unor scripturi de Python care accesează paginile cu produse ale magazinelor și selectează codul HTML relevant pentru produse.
-
-5. **Îmbunătățirea web-crawlers**
-   - **Descriere:** Adăugarea unei opțiuni atât pentru codurile de Python, cât și pentru utilizator care îl întreabă dacă dorește ca inputul lui să fie găsit exact cum a fost scris sau să fie incluse și alte iteme cu denumiri apropiate.
-
-6. **Dezvoltarea interfeței de utilizator**
-   - **Descriere:** Dezvoltarea unei interfețe de utilizator pentru căutarea și afișarea produselor din diverse magazine, sortate după criteriile dorite.
-
-7. **Implementarea unui coș de cumpărături**
-   - **Descriere:** Adăugarea unui coș de cumpărături care adaugă automat cel mai ieftin produs care este corespunzător cu numele și cantitatea introdusă de utilizator.
-
-8. **Optimizarea găsirii obiectelor dorite**
-   - **Descriere:** Folosirea unei baze de date care stochează produsele deja căutate pentru o perioadă limitată de timp, dar care ajută găsirea instantă a obiectelor deja căutate.
-
-
-## **Link Demo**
-https://www.youtube.com/watch?v=WOswKbCAIBI&ab_channel=AcidBurn
