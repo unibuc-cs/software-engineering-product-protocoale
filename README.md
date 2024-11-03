@@ -2,25 +2,12 @@
 
 ---
 
-## **Componenta echipă**
+## **Team Members**
 
 - **Voinescu David-Ioan**
 - **Ghena-Ionescu Alexandru**
-
----
-
-## **Epic Stories**
-
-1. **Căutarea celor mai ieftine produse**
-   - Utilizatorul poate căuta un produs și va primi o listă cu toate magazinele care au acel produs, împreună cu prețurile și cantitățile disponibile, pe care le poate sorta crescător/descrescător după cum dorește.
-
-2. **Afișarea magazinului cel mai apropiat**
-   - Sistemul afișează magazinul cel mai apropiat în funcție de locația utilizatorului sau de locația introdusă de utilizator, cu durata estimată până la el în funcție de mijlocul de deplasare și cu cea mai optimă rută spre acesta.
-
-3. **Calcularea celui mai ieftin coș de cumpărături**
-   - Utilizatorul poate introduce o listă de produse cu cantitățile dorite și va primi calculul celui mai ieftin coș pentru fiecare magazin, inclusiv suma totală a prețurilor pentru fiecare magazin și produsele selectate pentru fiecare coș.
-
----
+- **Uta Mario Ernest**
+- **Milosi Elias Fernando**
 
 ## **User Stories**
 
