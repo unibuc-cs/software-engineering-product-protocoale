@@ -7,7 +7,7 @@ namespace MDS_PROJECT.Controllers
     {
         public IActionResult Index()
         {
-            return View("~/Views/Home/Index.cshtml"); // Specify the correct path to the Index view
+            return View();
         }
     }
 }

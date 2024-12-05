@@ -18,6 +18,14 @@ def scrape_kaufland(query):
 
             # Find all divs containing product information
             product_divs = soup.find_all("div", class_="g-col t-search-result__list-item")
+            
+            if len(product_divs) == 0:
+                print("Product Name:", "none")
+                print("Product Subtitle:", "none")
+                print("Product Price:", "none")
+                print("Product Quantity:", "none")
+                print("-" * 50)
+                return
 
             # Iterate through each product div and extract information
             for div in product_divs:

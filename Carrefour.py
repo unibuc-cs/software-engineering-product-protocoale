@@ -40,7 +40,6 @@ def get_product_info(query):
         return None
 
 if __name__ == "__main__":
-    #print("INCEPE PYTHONULL")
     if len(sys.argv) != 2:
         print("Usage: python_script.py <query>")
         sys.exit(1)

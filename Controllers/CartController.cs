@@ -13,49 +13,12 @@ namespace MDS_PROJECT.Controllers
 {
     public class CartController : Controller
     {
-        public class CartViewModel
-        {
-            public List<CartItem> Items { get; set; } = new List<CartItem>();
-            public string CarrefourTotal { get; set; }
-            public string KauflandTotal { get; set; }
-        }
-
-        public class CartItem
-        {
-            public string ItemName { get; set; }
-            public string Quantity { get; set; }
-            public string Unit { get; set; }
-            public string CarrefourMessage { get; set; }
-            public string KauflandMessage { get; set; }
-            public string CarrefourStoreItemName { get; set; }
-            public string KauflandStoreItemName { get; set; }
-            public int Multiplier { get; set; } = 1; // Default to 1 if not specified
-        }
-
-        public class ItemResult
-        {
-            public string ItemName { get; set; }
-            public string Quantity { get; set; }
-            public string MeasureQuantity { get; set; }
-            public string Price { get; set; }
-            public string Store { get; set; }
-            public string Searched { get; set; }
-
-            public ItemResult() { }
-
-            public ItemResult(Product product)
-            {
-                ItemName = product.ItemName;
-                Quantity = product.Quantity;
-                MeasureQuantity = product.MeasureQuantity;
-                Price = product.Price;
-                Store = product.Store;
-                Searched = product.Searched;
-            }
-        }
-
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _configuration;
+
+        /*///////////////////////////////*/
+        /*-------[ Public Actions]-------*/
+        /*///////////////////////////////*/
 
         public CartController(ApplicationDbContext db, IConfiguration configuration)
         {
@@ -63,27 +26,23 @@ namespace MDS_PROJECT.Controllers
             _configuration = configuration;
         }
 
+        [HttpGet]
         public IActionResult Index()
         {
-            var viewModel = new CartViewModel();
-            return View(viewModel);
+            return View();
         }
 
         [HttpPost]
         public async Task<IActionResult> Index(List<CartItem> items, bool exactItemName = false)
         {
-            var cartViewModel = new CartViewModel { Items = items };
             decimal carrefourTotal = 0;
             decimal kauflandTotal = 0;
 
             foreach (var item in items)
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
                 var existingProducts = _db.Products
                                           .Where(p => p.Searched == item.ItemName)
                                           .ToList();
-                stopwatch.Stop();
-                Debug.WriteLine($"Database query for {item.ItemName} took {stopwatch.ElapsedMilliseconds} ms");
 
                 var carrefourMessage = "Not found in Carrefour";
                 var kauflandMessage = "Not found in Kaufland";
@@ -92,8 +51,8 @@ namespace MDS_PROJECT.Controllers
 
                 if (existingProducts.Any())
                 {
-                    var carrefourItems = existingProducts.Where(p => p.Store == "Carrefour").Select(p => new ItemResult(p)).ToList();
-                    var kauflandItems = existingProducts.Where(p => p.Store == "Kaufland").Select(p => new ItemResult(p)).ToList();
+                    var carrefourItems = existingProducts.Where(p => p.Store == "Carrefour").ToList();
+                    var kauflandItems = existingProducts.Where(p => p.Store == "Kaufland").ToList();
 
                     carrefourItems = FilterItems(carrefourItems, item.Quantity);
                     kauflandItems = FilterItems(kauflandItems, item.Quantity);
@@ -117,11 +76,14 @@ namespace MDS_PROJECT.Controllers
                 }
                 else
                 {
-                    var carrefourTask = GetSearchResult("Carrefour.py", item.ItemName, exactItemName);
-                    var kauflandTask = GetSearchResult("Kaufland.py", item.ItemName, exactItemName);
+                    // Defining scraper scripts and parameters
+                    var carrefourTask = StartSearchScript("Carrefour.py", item.ItemName, exactItemName);
+                    var kauflandTask = StartSearchScript("Kaufland.py", item.ItemName, exactItemName);
 
+                    // Starting and awaiting scrapers
                     await Task.WhenAll(carrefourTask, kauflandTask);
-
+                    
+                    // Get results
                     var carrefourResults = ParseResults(carrefourTask.Result, "Carrefour");
                     var kauflandResults = ParseResults(kauflandTask.Result, "Kaufland");
 
@@ -154,19 +116,23 @@ namespace MDS_PROJECT.Controllers
                 item.KauflandStoreItemName = kauflandStoreItemName;
             }
 
-            cartViewModel.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
-            cartViewModel.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
+            ViewBag.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
+            ViewBag.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
+            ViewBag.Items = items;
 
-            return View(cartViewModel);
-        }
+            return View();
+        } // Index
 
-        private async Task<string> GetSearchResult(string scriptPath, string query, bool exactItemName)
+        /*///////////////////////////////////*/
+        /*-------[ Private functions ]-------*/
+        /*///////////////////////////////////*/
+
+        [NonAction]
+        private async Task<string> StartSearchScript(string scriptPath, string query, bool exactItemName)
         {
             string pythonExePath = _configuration["PathVariables:PythonExePath"];
-            string scriptFolderPath = _configuration["PathVariables:ScriptFolderPath"];
-            string fullScriptPath = Path.Combine(scriptFolderPath, exactItemName ? scriptPath.Replace(".py", "Exact.py") : scriptPath);
-
-            Debug.WriteLine($"Executing command: {pythonExePath} {fullScriptPath} {query}");
+            string scriptFolderPath = _configuration["PathVariables:ScriptFolderPath"] ;
+            string fullScriptPath = "\"" + Path.Combine(scriptFolderPath, exactItemName ? scriptPath.Replace(".py", "Exact.py") : scriptPath) + "\"";
 
             ProcessStartInfo start = new ProcessStartInfo
             {
@@ -186,6 +152,8 @@ namespace MDS_PROJECT.Controllers
                     string result = await outputReader.ReadToEndAsync();
                     string error = await errorReader.ReadToEndAsync();
 
+                    await process.WaitForExitAsync();
+
                     if (process.ExitCode != 0)
                     {
                         Debug.WriteLine($"Python script error output: {error}");
@@ -195,14 +163,16 @@ namespace MDS_PROJECT.Controllers
                     return result;
                 }
             }
-        }
+        } // StartSearchScript
 
-        private List<ItemResult> FilterItems(List<ItemResult> items, string quantity)
+        [NonAction]
+        private List<Product> FilterItems(List<Product> items, string quantity)
         {
             var normalizedQuantities = GetEquivalentQuantities(quantity);
             return items.Where(p => normalizedQuantities.Contains(NormalizeQuantity(p.Quantity))).ToList();
         }
 
+        [NonAction]
         private List<string> GetEquivalentQuantities(string quantity)
         {
             var normalizedQuantity = NormalizeQuantity(quantity);
@@ -220,6 +190,7 @@ namespace MDS_PROJECT.Controllers
             return equivalents;
         }
 
+        [NonAction]
         private string NormalizeQuantity(string quantity)
         {
             if (string.IsNullOrEmpty(quantity))
@@ -229,19 +200,22 @@ namespace MDS_PROJECT.Controllers
             return quantity.Replace(',', '.');
         }
 
+        [NonAction]
         private decimal ParsePrice(string price)
         {
             var cleanedPrice = Regex.Replace(price, @"[^\d,\.]", "");
             return decimal.Parse(cleanedPrice.Replace(',', '.'), CultureInfo.InvariantCulture);
         }
 
-        private List<ItemResult> ParseResults(string results, string store)
+        [NonAction]
+        private List<Product> ParseResults(string results, string store)
         {
             string pattern = store == "Carrefour"
                 ? @"Product: (.+?) (\d*[\.,]?\d+)\s*(\w+), Price: (\d+[\.,]?\d*) Lei"
                 : @"Product Name: (.+?)\r\nProduct Subtitle: (.+?)\r\nProduct Price: (\d+[\.,]?\d*)\r\nProduct Quantity: (.+)";
 
             MatchCollection matches = Regex.Matches(results, pattern);
+
             return matches.Cast<Match>().Select(m =>
             {
                 if (store == "Carrefour")
@@ -251,7 +225,7 @@ namespace MDS_PROJECT.Controllers
                         Debug.WriteLine($"Unexpected match format for Carrefour: {m.Value}");
                         return null;
                     }
-                    return new ItemResult
+                    return new Product
                     {
                         ItemName = m.Groups[1].Value.Trim(),
                         Quantity = m.Groups[2].Value.Trim(),
@@ -267,13 +241,15 @@ namespace MDS_PROJECT.Controllers
                         Debug.WriteLine($"Unexpected match format for Kaufland: {m.Value}");
                         return null;
                     }
+                    
                     var quantitySplit = m.Groups[4].Value.Trim().Split(' ');
                     if (quantitySplit.Length != 2)
                     {
                         Debug.WriteLine($"Unexpected quantity format for Kaufland: {m.Groups[4].Value}");
                         return null;
                     }
-                    return new ItemResult
+
+                    return new Product
                     {
                         ItemName = m.Groups[1].Value.Trim() + " " + m.Groups[2].Value.Trim(),
                         Quantity = quantitySplit[0].Trim(),
@@ -285,17 +261,10 @@ namespace MDS_PROJECT.Controllers
             }).Where(item => item != null).ToList();
         }
 
-        private void SaveProductToDatabase(ItemResult itemResult, string searchedItem)
+        [NonAction]
+        private void SaveProductToDatabase(Product product, string searchedItem)
         {
-            var product = new Product
-            {
-                ItemName = itemResult.ItemName,
-                Quantity = itemResult.Quantity,
-                MeasureQuantity = itemResult.MeasureQuantity,
-                Price = itemResult.Price,
-                Store = itemResult.Store,
-                Searched = searchedItem
-            };
+            product.Searched = searchedItem;
 
             if (!_db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity && p.MeasureQuantity == product.MeasureQuantity && p.Store == product.Store))
             {

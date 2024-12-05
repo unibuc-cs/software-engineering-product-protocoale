@@ -16,7 +16,7 @@
             margin-bottom: 10px;
         }
 
-        button {
+        a {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -24,9 +24,10 @@
             color: #fff;
             cursor: pointer;
             margin: 5px;
+            text-decoration: none;
         }
 
-            button:hover {
+            a:hover {
                 background-color: #777;
             }
 
@@ -41,8 +42,8 @@
         <input type="text" id="userAddress" placeholder="Enter your address">
         <button onclick="saveAddress()">Save Address</button>
         <br><br>
-        <button onclick="redirectToCart()">Creează Coș de Cumpărături</button>
-        <button onclick="redirectToProduct()">Caută Prețuri Produs</button>
+        <a href="/Cart">Create a shopping cart</a>
+        <a href="/Product">Search product prices</a>
     </div>
 
     <script>
@@ -54,14 +55,6 @@
             } else {
                 alert("Please enter an address.");
             }
-        }
-
-        function redirectToCart() {
-            window.location.href = "/Cart";
-        }
-
-        function redirectToProduct() {
-            window.location.href = "/Product";
         }
     </script>
 </body>

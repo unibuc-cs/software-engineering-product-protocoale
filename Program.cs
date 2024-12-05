@@ -11,7 +11,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-//Serviciile necesare pentru clasa ApplicationUser (pt roluri)
+// Serviciile necesare pentru clasa ApplicationUser (pt roluri)
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
         .AddRoles<IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>(
@@ -22,7 +22,7 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-//Atasam metoda Initialize din SeedData dupa Build()
+// Atasam metoda Initialize din SeedData dupa Build()
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
