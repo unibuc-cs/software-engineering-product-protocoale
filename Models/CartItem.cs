@@ -2,8 +2,6 @@
 {
     public class CartItem
     {
-        // public string ProductName { get; set; }
-        // public int Quantity { get; set; }
         public string ItemName { get; set; }
         public string Quantity { get; set; }
         public string Unit { get; set; }

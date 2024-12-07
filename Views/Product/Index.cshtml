@@ -1,5 +1,3 @@
-@model MDS_PROJECT.Controllers.ProductController.SearchViewModel
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,7 +58,7 @@
         <div class="results-container mt-5">
             <div class="results">
                 <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
-                @if (Model != null && Model.CarrefourResults != null && Model.CarrefourResults.Any())
+                @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
                 {
                     <div class="mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
@@ -68,7 +66,7 @@
                         <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
                     </div>
                     <ul id="carrefour-results" class="product-list">
-                        @foreach (var item in Model.CarrefourResults)
+                        @foreach (var item in ViewBag.CarrefourResults)
                         {
                             <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
                         }
@@ -82,7 +80,7 @@
 
             <div class="results">
                 <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
-                @if (Model != null && Model.KauflandResults != null && Model.KauflandResults.Any())
+                @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
                 {
                     <div class="mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
@@ -90,7 +88,7 @@
                         <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
                     </div>
                     <ul id="kaufland-results" class="product-list">
-                        @foreach (var item in Model.KauflandResults)
+                        @foreach (var item in ViewBag.KauflandResults)
                         {
                             <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
                         }

@@ -1,5 +1,6 @@
 ﻿using MDS_PROJECT.Data;
 using MDS_PROJECT.Models;
+using MDS_PROJECT.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Text;
@@ -9,21 +10,28 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Globalization;
 
+
 namespace MDS_PROJECT.Controllers
 {
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _configuration;
+        private readonly Utilities utils;
 
         /*///////////////////////////////*/
         /*-------[ Public Actions]-------*/
         /*///////////////////////////////*/
 
-        public CartController(ApplicationDbContext db, IConfiguration configuration)
+        public CartController(
+            ApplicationDbContext db, 
+            IConfiguration configuration,
+            Utilities _utils    
+        )
         {
             _db = db;
             _configuration = configuration;
+            utils = _utils;
         }
 
         [HttpGet]
@@ -49,7 +57,7 @@ namespace MDS_PROJECT.Controllers
                 var carrefourStoreItemName = string.Empty;
                 var kauflandStoreItemName = string.Empty;
 
-                if (existingProducts.Any())
+                if (existingProducts.Any()) // first search in the database for products
                 {
                     var carrefourItems = existingProducts.Where(p => p.Store == "Carrefour").ToList();
                     var kauflandItems = existingProducts.Where(p => p.Store == "Kaufland").ToList();
@@ -74,11 +82,11 @@ namespace MDS_PROJECT.Controllers
                         kauflandStoreItemName = cheapestKauflandItem.ItemName;
                     }
                 }
-                else
+                else // if there are no items in the database we start the scripts to search in sotres.
                 {
                     // Defining scraper scripts and parameters
-                    var carrefourTask = StartSearchScript("Carrefour.py", item.ItemName, exactItemName);
-                    var kauflandTask = StartSearchScript("Kaufland.py", item.ItemName, exactItemName);
+                    var carrefourTask = utils.StartSearchScript("Carrefour.py", item.ItemName, exactItemName);
+                    var kauflandTask = utils.StartSearchScript("Kaufland.py", item.ItemName, exactItemName);
 
                     // Starting and awaiting scrapers
                     await Task.WhenAll(carrefourTask, kauflandTask);
@@ -108,13 +116,13 @@ namespace MDS_PROJECT.Controllers
                         kauflandStoreItemName = cheapestKauflandItem.ItemName;
                         SaveProductToDatabase(cheapestKauflandItem, item.ItemName);
                     }
-                }
+                } // else
 
                 item.CarrefourMessage = carrefourMessage;
                 item.KauflandMessage = kauflandMessage;
                 item.CarrefourStoreItemName = carrefourStoreItemName;
                 item.KauflandStoreItemName = kauflandStoreItemName;
-            }
+            } // foreach
 
             ViewBag.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
             ViewBag.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
@@ -128,76 +136,10 @@ namespace MDS_PROJECT.Controllers
         /*///////////////////////////////////*/
 
         [NonAction]
-        private async Task<string> StartSearchScript(string scriptPath, string query, bool exactItemName)
-        {
-            string pythonExePath = _configuration["PathVariables:PythonExePath"];
-            string scriptFolderPath = _configuration["PathVariables:ScriptFolderPath"] ;
-            string fullScriptPath = "\"" + Path.Combine(scriptFolderPath, exactItemName ? scriptPath.Replace(".py", "Exact.py") : scriptPath) + "\"";
-
-            ProcessStartInfo start = new ProcessStartInfo
-            {
-                FileName = pythonExePath,
-                Arguments = $"{fullScriptPath} \"{query}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8
-            };
-
-            using (Process process = Process.Start(start))
-            {
-                using (StreamReader outputReader = process.StandardOutput)
-                using (StreamReader errorReader = process.StandardError)
-                {
-                    string result = await outputReader.ReadToEndAsync();
-                    string error = await errorReader.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    if (process.ExitCode != 0)
-                    {
-                        Debug.WriteLine($"Python script error output: {error}");
-                        throw new Exception($"Python script error: {error}");
-                    }
-
-                    return result;
-                }
-            }
-        } // StartSearchScript
-
-        [NonAction]
         private List<Product> FilterItems(List<Product> items, string quantity)
         {
-            var normalizedQuantities = GetEquivalentQuantities(quantity);
-            return items.Where(p => normalizedQuantities.Contains(NormalizeQuantity(p.Quantity))).ToList();
-        }
-
-        [NonAction]
-        private List<string> GetEquivalentQuantities(string quantity)
-        {
-            var normalizedQuantity = NormalizeQuantity(quantity);
-            var equivalents = new List<string> { normalizedQuantity };
-
-            if (decimal.TryParse(normalizedQuantity, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qty))
-            {
-                equivalents.Add((qty * 1000).ToString("F0", CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString("F3", CultureInfo.InvariantCulture));
-                equivalents.Add(qty.ToString("F1", CultureInfo.InvariantCulture).Replace('.', ','));
-                equivalents.Add((qty * 1000).ToString(CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString(CultureInfo.InvariantCulture));
-            }
-
-            return equivalents;
-        }
-
-        [NonAction]
-        private string NormalizeQuantity(string quantity)
-        {
-            if (string.IsNullOrEmpty(quantity))
-            {
-                return string.Empty;
-            }
-            return quantity.Replace(',', '.');
+            var normalizedQuantities = utils.GetEquivalentQuantities(quantity);
+            return items.Where(p => normalizedQuantities.Contains(utils.NormalizeQuantity(p.Quantity))).ToList();
         }
 
         [NonAction]
