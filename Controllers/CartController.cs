@@ -15,8 +15,8 @@ namespace MDS_PROJECT.Controllers
 {
     public class CartController : Controller
     {
-        private readonly ApplicationDbContext _db;
-        private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext db;
+        // private readonly IConfiguration configuration;
         private readonly Utilities utils;
 
         /*///////////////////////////////*/
@@ -24,13 +24,13 @@ namespace MDS_PROJECT.Controllers
         /*///////////////////////////////*/
 
         public CartController(
-            ApplicationDbContext db, 
-            IConfiguration configuration,
+            ApplicationDbContext _db, 
+            // IConfiguration _configuration,
             Utilities _utils    
         )
         {
-            _db = db;
-            _configuration = configuration;
+            db = _db;
+            // configuration = _configuration;
             utils = _utils;
         }
 
@@ -48,7 +48,7 @@ namespace MDS_PROJECT.Controllers
 
             foreach (var item in items)
             {
-                var existingProducts = _db.Products
+                var existingProducts = db.Products
                                           .Where(p => p.Searched == item.ItemName)
                                           .ToList();
 
@@ -62,22 +62,22 @@ namespace MDS_PROJECT.Controllers
                     var carrefourItems = existingProducts.Where(p => p.Store == "Carrefour").ToList();
                     var kauflandItems = existingProducts.Where(p => p.Store == "Kaufland").ToList();
 
-                    carrefourItems = FilterItems(carrefourItems, item.Quantity);
-                    kauflandItems = FilterItems(kauflandItems, item.Quantity);
+                    carrefourItems = utils.FilterItems(carrefourItems, item.Quantity);
+                    kauflandItems = utils.FilterItems(kauflandItems, item.Quantity);
 
-                    var cheapestCarrefourItem = carrefourItems.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-                    var cheapestKauflandItem = kauflandItems.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
+                    var cheapestCarrefourItem = carrefourItems.OrderBy(p => utils.ParsePrice(p.Price)).FirstOrDefault();
+                    var cheapestKauflandItem = kauflandItems.OrderBy(p => utils.ParsePrice(p.Price)).FirstOrDefault();
 
                     if (cheapestCarrefourItem != null)
                     {
-                        carrefourTotal += ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
+                        carrefourTotal += utils.ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
                         carrefourMessage = $"{cheapestCarrefourItem.ItemName}: {cheapestCarrefourItem.Price} Lei";
                         carrefourStoreItemName = cheapestCarrefourItem.ItemName;
                     }
 
                     if (cheapestKauflandItem != null)
                     {
-                        kauflandTotal += ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
+                        kauflandTotal += utils.ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
                         kauflandMessage = $"{cheapestKauflandItem.ItemName}: {cheapestKauflandItem.Price} Lei";
                         kauflandStoreItemName = cheapestKauflandItem.ItemName;
                     }
@@ -95,26 +95,26 @@ namespace MDS_PROJECT.Controllers
                     var carrefourResults = ParseResults(carrefourTask.Result, "Carrefour");
                     var kauflandResults = ParseResults(kauflandTask.Result, "Kaufland");
 
-                    carrefourResults = FilterItems(carrefourResults, item.Quantity);
-                    kauflandResults = FilterItems(kauflandResults, item.Quantity);
+                    carrefourResults = utils.FilterItems(carrefourResults, item.Quantity);
+                    kauflandResults = utils.FilterItems(kauflandResults, item.Quantity);
 
-                    var cheapestCarrefourItem = carrefourResults.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-                    var cheapestKauflandItem = kauflandResults.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
+                    var cheapestCarrefourItem = carrefourResults.OrderBy(p => utils.ParsePrice(p.Price)).FirstOrDefault();
+                    var cheapestKauflandItem = kauflandResults.OrderBy(p => utils.ParsePrice(p.Price)).FirstOrDefault();
 
                     if (cheapestCarrefourItem != null)
                     {
-                        carrefourTotal += ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
+                        carrefourTotal += utils.ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
                         carrefourMessage = $"{cheapestCarrefourItem.ItemName}: {cheapestCarrefourItem.Price} Lei";
                         carrefourStoreItemName = cheapestCarrefourItem.ItemName;
-                        SaveProductToDatabase(cheapestCarrefourItem, item.ItemName);
+                        await utils.SaveToDatabase(cheapestCarrefourItem, item.ItemName);
                     }
 
                     if (cheapestKauflandItem != null)
                     {
-                        kauflandTotal += ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
+                        kauflandTotal += utils.ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
                         kauflandMessage = $"{cheapestKauflandItem.ItemName}: {cheapestKauflandItem.Price} Lei";
                         kauflandStoreItemName = cheapestKauflandItem.ItemName;
-                        SaveProductToDatabase(cheapestKauflandItem, item.ItemName);
+                        await utils.SaveToDatabase(cheapestKauflandItem, item.ItemName);
                     }
                 } // else
 
@@ -134,20 +134,6 @@ namespace MDS_PROJECT.Controllers
         /*///////////////////////////////////*/
         /*-------[ Private functions ]-------*/
         /*///////////////////////////////////*/
-
-        [NonAction]
-        private List<Product> FilterItems(List<Product> items, string quantity)
-        {
-            var normalizedQuantities = utils.GetEquivalentQuantities(quantity);
-            return items.Where(p => normalizedQuantities.Contains(utils.NormalizeQuantity(p.Quantity))).ToList();
-        }
-
-        [NonAction]
-        private decimal ParsePrice(string price)
-        {
-            var cleanedPrice = Regex.Replace(price, @"[^\d,\.]", "");
-            return decimal.Parse(cleanedPrice.Replace(',', '.'), CultureInfo.InvariantCulture);
-        }
 
         [NonAction]
         private List<Product> ParseResults(string results, string store)
@@ -203,16 +189,6 @@ namespace MDS_PROJECT.Controllers
             }).Where(item => item != null).ToList();
         }
 
-        [NonAction]
-        private void SaveProductToDatabase(Product product, string searchedItem)
-        {
-            product.Searched = searchedItem;
-
-            if (!_db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity && p.MeasureQuantity == product.MeasureQuantity && p.Store == product.Store))
-            {
-                _db.Products.Add(product);
-                _db.SaveChanges();
-            }
-        }
+        
     }
 }
