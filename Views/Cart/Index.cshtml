@@ -48,12 +48,12 @@
                         <input type="text" name="items[0].Quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)" required>
                     </div>
                     <div class="col-md-3">
-                        <label for="items[0].Unit" class="form-label">Unit:</label>
-                        <select name="items[0].Unit" class="form-select" required>
-                            <option value="liter">liter</option>
+                        <label for="items[0].MeasureUnit" class="form-label">MeasureUnit:</label>
+                        <select name="items[0].MeasureUnit" class="form-select" required>
+                            <option value="l">liter</option>
                             <option value="ml">ml</option>
                             <option value="piece">piece</option>
-                            <option value="gram">gram</option>
+                            <option value="g">gram</option>
                             <option value="kg">kg</option>
                         </select>
                     </div>
@@ -79,7 +79,7 @@
                 @foreach (var item in ViewBag.Items)
                 {
                     <li class="list-group-item bg-dark text-white">
-                        @item.ItemName - Quantity: @item.Quantity @item.Unit - Multiplier: @item.Multiplier
+                        @item.ItemName - Quantity: @item.Quantity @item.MeasureUnit - Multiplier: @item.Multiplier
                         <p>Carrefour: @item.CarrefourMessage</p>
                         <p>Kaufland: @item.KauflandMessage</p>
                     </li>
@@ -111,8 +111,8 @@
                                             <input type="text" name="items[${itemIndex}].Quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)" required>
                                         </div>
                                         <div class="col-md-3">
-                                            <label for="items[${itemIndex}].Unit" class="form-label">Unit:</label>
-                                            <select name="items[${itemIndex}].Unit" class="form-select" required>
+                                            <label for="items[${itemIndex}].MeasureUnit" class="form-label">Unit:</label>
+                                            <select name="items[${itemIndex}].MeasureUnit" class="form-select" required>
                                                 <option value="liter">liter</option>
                                                 <option value="ml">ml</option>
                                                 <option value="piece">piece</option>

@@ -38,8 +38,9 @@ namespace MDS_PROJECT.Controllers
 
         // Action to handle the search request for products in both stores
         [HttpPost]
-        public async Task<IActionResult> SearchBoth(string query, string quantity, bool exactItemName)
+        public async Task<IActionResult> SearchBoth(string query, string quantity, string unit, bool exactItemName)
         {
+            var quantityNumber = utils.StringToDecimal(quantity);
             // Return an empty view if the query is empty
             if (string.IsNullOrEmpty(query))
             {
@@ -50,8 +51,8 @@ namespace MDS_PROJECT.Controllers
             var existingProducts = db.Products.Where(p => p.Searched == query).ToList();
             if (existingProducts.Any())
             {
-                ViewBag.CarrefourResults = existingProducts.Where(p => p.Store == "Carrefour" && (!string.IsNullOrEmpty(quantity) || utils.GetEquivalentQuantities(quantity).Contains(p.Quantity))).ToList();
-                ViewBag.KauflandResults = existingProducts.Where(p => p.Store == "Kaufland" && (!string.IsNullOrEmpty(quantity) || utils.GetEquivalentQuantities(quantity).Contains(p.Quantity))).ToList();
+                ViewBag.CarrefourResults = existingProducts.Where(p => p.Store == "Carrefour" && (!string.IsNullOrEmpty(quantity) || utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit))).ToList();
+                ViewBag.KauflandResults = existingProducts.Where(p => p.Store == "Kaufland" && (!string.IsNullOrEmpty(quantity) || utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit))).ToList();
 
                 return View("Index");
             }
@@ -65,11 +66,10 @@ namespace MDS_PROJECT.Controllers
             var carrefourResults = utils.ParseResults(carrefourTask.Result);
             var kauflandResults = utils.ParseKauflandResults(kauflandTask.Result);
 
-            if (!string.IsNullOrEmpty(quantity))
+            if (quantityNumber < 0.0m)
             {
-                var equivalentQuantities = utils.GetEquivalentQuantities(quantity);
-                carrefourResults = carrefourResults.Where(p => equivalentQuantities.Contains(p.Quantity)).ToList();
-                kauflandResults = kauflandResults.Where(p => equivalentQuantities.Contains(p.Quantity)).ToList();
+                carrefourResults = carrefourResults.Where(p => utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit)).ToList();
+                kauflandResults = kauflandResults.Where(p => utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit)).ToList();
             }
 
             await utils.SaveToDatabase(carrefourResults, query);

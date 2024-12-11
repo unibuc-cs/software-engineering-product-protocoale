@@ -23,25 +23,58 @@ namespace MDS_PROJECT.Helpers
             configuration = _configuration;
         }
 
-        public string NormalizeQuantity(string quantity)
+        public decimal StringToDecimal(string quantity)
         {
             if (string.IsNullOrEmpty(quantity))
             {
-                return string.Empty;
+                return -1.0m;
             }
-            return quantity.Replace(',', '.');
+            
+            CultureInfo romanianCulture = new CultureInfo("ro-RO");
+
+            if (decimal.TryParse(quantity, NumberStyles.Number, romanianCulture, out decimal result1))
+                return result1;
+            
+            if (decimal.TryParse(quantity, out decimal result2))
+                return result2;
+            
+            return -1.0m;
         }
 
-        public List<Product> FilterItems(List<Product> items, string quantity)
+        public List<Product> FilterItems(List<Product> items, decimal quantity, string measureUnit)
         {
-            var normalizedQuantities = GetEquivalentQuantities(quantity);
-            return items.Where(p => normalizedQuantities.Contains(NormalizeQuantity(p.Quantity))).ToList();
+            return items.Where(p => IsEquivalent(quantity, measureUnit, p.Quantity, p.MeasureUnit)).ToList();
         }
 
-        public decimal ParsePrice(string price)
+
+        public bool IsEquivalent(decimal quantity1, string measureUnit1, decimal quantity2, string measureUnit2)
         {
-            var cleanedPrice = Regex.Replace(price, @"[^\d,\.]", "");
-            return decimal.Parse(cleanedPrice.Replace(',', '.'), CultureInfo.InvariantCulture);
+            // Convert the first quantity to a common unit (kg or L)
+            if (measureUnit1.ToLower() == "kg")
+            {
+                quantity1 *= 1000; // Convert kg to g
+                measureUnit1 = "g";
+            }
+            else if (measureUnit1.ToLower() == "l")
+            {
+                quantity1 *= 1000; // Convert L to mL
+                measureUnit1 = "mL";
+            }
+
+            // Convert the second quantity to a common unit (kg or L)
+            if (measureUnit2.ToLower() == "kg")
+            {
+                quantity2 *= 1000; // Convert kg to g
+                measureUnit2 = "g";
+            }
+            else if (measureUnit2.ToLower() == "l")
+            {
+                quantity2 *= 1000; // Convert L to mL
+                measureUnit2 = "mL";
+            }
+
+            // Compare the quantities
+            return (Math.Abs(quantity1 - quantity2) < 0.0001m) && string.Compare(measureUnit1, measureUnit2) == 0; // Small tolerance for decimal comparison
         }
 
         // some polimorfic functions here
@@ -49,7 +82,7 @@ namespace MDS_PROJECT.Helpers
         {
             product.Searched = query;
 
-            if (!db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity && p.MeasureQuantity == product.MeasureQuantity && p.Store == product.Store))
+            if (!db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity && p.MeasureUnit == product.MeasureUnit && p.Store == product.Store))
             {
                 db.Products.Add(product);
                 await db.SaveChangesAsync();
@@ -60,19 +93,19 @@ namespace MDS_PROJECT.Helpers
         {
             foreach (var item in products)
             {
-                var product = new Product
+                // var product = new Product(item);
+                // // {
+                // //     ItemName = item.ItemName,
+                // //     Quantity = item.Quantity,
+                // //     MeasureUnit = item.MeasureUnit,
+                // //     Price = item.Price,
+                // //     Store = item.Store,
+                // //     Searched = query
+                // // };
+                // product.Searched = query;
+                if (!db.Products.Any(p => p.ItemName == item.ItemName && p.Quantity == item.Quantity))
                 {
-                    ItemName = item.ItemName,
-                    Quantity = item.Quantity,
-                    MeasureQuantity = item.MeasureQuantity,
-                    Price = item.Price,
-                    Store = item.Store,
-                    Searched = query
-                };
-
-                if (!db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity))
-                {
-                    db.Products.Add(product);
+                    db.Products.Add(item);
                 }
             }
 
@@ -119,35 +152,48 @@ namespace MDS_PROJECT.Helpers
         } // StartSearchScript
 
 
-        public List<string> GetEquivalentQuantities(string quantity)
-        {
-            var normalizedQuantity = NormalizeQuantity(quantity);
-            var equivalents = new List<string> { normalizedQuantity };
-
-            if (decimal.TryParse(normalizedQuantity, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qty))
-            {
-                equivalents.Add((qty * 1000).ToString("F0", CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString("F3", CultureInfo.InvariantCulture));
-                equivalents.Add(qty.ToString("F1", CultureInfo.InvariantCulture).Replace('.', ','));
-                equivalents.Add((qty * 1000).ToString(CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString(CultureInfo.InvariantCulture));
-            }
-
-            return equivalents;
-        }
-
         public List<Product> ParseResults(string results)
         {
             string pattern = @"Product: (.+?) (\d*[\.,]?\d+)\s*(\w+), Price: (\d+[\.,]?\d*) Lei";
             MatchCollection matches = Regex.Matches(results, pattern);
             return matches.Cast<Match>().Select(m => new Product
+                {
+                    ItemName = m.Groups[1].Value.Trim(),
+                    Quantity = StringToDecimal(m.Groups[2].Value.Trim()),
+                    MeasureUnit = m.Groups[3].Value.Trim(),
+                    Price = StringToDecimal(m.Groups[4].Value.Trim()),
+                    Currency = "lei",
+                    Store = "Carrefour"
+                }).ToList();
+        }
+
+        public List<Product> ParseResults(string results, string store)
+        {
+            switch (store)
             {
-                ItemName = m.Groups[1].Value.Trim(),
-                Quantity = m.Groups[2].Value.Trim(),
-                MeasureQuantity = m.Groups[3].Value.Trim(),
-                Price = m.Groups[4].Value.Trim(),
-                Store = "Carrefour"
-            }).ToList();
+                case string.Equals("carrefour", store, StringComparison.OrdinalIgnoreCase):
+                    return ParseCarrefourResults(results);
+                case string.Equals("kaufland", store, StringComparison.OrdinalIgnoreCase):
+                    return ParseKauflandResults(results);
+                default:
+                    return new List<Product>();
+            }
+        }
+
+        public List<Product> ParseCarrefourResults(string results)
+        {
+            string delimiter = new string("-", 50);
+            var products = results.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+            List<Product> result = new List<Product>();
+
+            foreach (var product in products)
+            {
+                var attributes = product.Split("\n"); // [0] -> product name + others, [1] -> product price
+                
+
+            }
+        
+            return result;
         }
 
         public List<Product> ParseKauflandResults(string results)
@@ -172,9 +218,10 @@ namespace MDS_PROJECT.Helpers
                         kauflandResults.Add(new Product
                         {
                             ItemName = itemName,
-                            Quantity = quantitySplit[0],
-                            MeasureQuantity = quantitySplit[1],
-                            Price = price + " Lei",
+                            Quantity = StringToDecimal(quantitySplit[0]),
+                            MeasureUnit = quantitySplit[1],
+                            Price = StringToDecimal(price),
+                            Currency = "lei",
                             Store = "Kaufland"
                         });
                     }

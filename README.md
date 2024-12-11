@@ -8,6 +8,7 @@
 - **Ghena-Ionescu Alexandru**
 - **Uta Mario Ernest**
 - **Milosi Elias**
+- **Vlad Steopoaie**
 
 # Product Vision
 

@@ -44,6 +44,16 @@
                 <input type="text" name="quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)">
             </div>
             <div class="col-auto">
+                <!-- <label for="items[0].MeasureUnit" class="form-label">MeasureUnit:</label> -->
+                <select name="unit" class="form-select" required>
+                    <option value="l">liter</option>
+                    <option value="ml">ml</option>
+                    <option value="piece">piece</option>
+                    <option value="g">gram</option>
+                    <option value="kg">kg</option>
+                </select>
+            </div>
+            <div class="col-auto">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="exactItemName" value="True">
                     <label class="form-check-label" for="exactItemName">Exact Item Name</label>
@@ -68,7 +78,7 @@
                     <ul id="carrefour-results" class="product-list">
                         @foreach (var item in ViewBag.CarrefourResults)
                         {
-                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
+                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
                         }
                     </ul>
                 }
