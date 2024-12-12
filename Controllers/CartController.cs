@@ -16,7 +16,6 @@ namespace MDS_PROJECT.Controllers
     public class CartController : Controller
     {
         private readonly ApplicationDbContext db;
-        // private readonly IConfiguration configuration;
         private readonly Utilities utils;
 
         public class CartItem
@@ -29,18 +28,12 @@ namespace MDS_PROJECT.Controllers
             public int Multiplier { get; set; } = 1; // Default to 1 if not specified
         }
 
-        /*///////////////////////////////*/
-        /*-------[ Public Actions]-------*/
-        /*///////////////////////////////*/
-
         public CartController(
             ApplicationDbContext _db, 
-            // IConfiguration _configuration,
             Utilities _utils    
         )
         {
             db = _db;
-            // configuration = _configuration;
             utils = _utils;
         }
 
@@ -63,8 +56,8 @@ namespace MDS_PROJECT.Controllers
                 item.KauflandMessage = "Not found in Kaufland";
 
                 var existingProducts = db.Products
-                                          .Where(p => p.Searched == item.ItemName)
-                                          .ToList();
+                                        .Where(p => p.Searched == item.ItemName)
+                                        .ToList();
 
                 List<Product> carrefourResults;
                 List<Product> kauflandResults;
@@ -72,8 +65,8 @@ namespace MDS_PROJECT.Controllers
 
                 if (existingProducts.Any()) // first search in the database for products
                 {
-                    carrefourResults = existingProducts.Where(p => p.Store == "Carrefour").ToList();
-                    kauflandResults = existingProducts.Where(p => p.Store == "Kaufland").ToList();
+                    carrefourResults = utils.FilterItems(existingProducts, itemQuantity, item.MeasureUnit, "carrefour");
+                    kauflandResults = utils.FilterItems(existingProducts, itemQuantity, item.MeasureUnit, "kaufland");
                     fromDatabase = true;
                 }
                 else // if there are no items in the database we start the scripts to search in sotres.
@@ -86,13 +79,13 @@ namespace MDS_PROJECT.Controllers
                     await Task.WhenAll(carrefourTask, kauflandTask);
                     
                     // Get results
-                    carrefourResults = ParseResults(carrefourTask.Result, "Carrefour");
-                    kauflandResults = ParseResults(kauflandTask.Result, "Kaufland");
+                    carrefourResults = utils.ParseResults(carrefourTask.Result, "Carrefour");
+                    kauflandResults = utils.ParseResults(kauflandTask.Result, "Kaufland");
+                    carrefourResults = utils.FilterItems(carrefourResults, itemQuantity, item.MeasureUnit);
+                    kauflandResults = utils.FilterItems(kauflandResults, itemQuantity, item.MeasureUnit);
 
                 }
 
-                carrefourResults = utils.FilterItems(carrefourResults, itemQuantity, item.MeasureUnit);
-                kauflandResults = utils.FilterItems(kauflandResults, itemQuantity, item.MeasureUnit);
 
                 var cheapestCarrefourItem = carrefourResults.OrderBy(p => p.Price).FirstOrDefault();
                 var cheapestKauflandItem = kauflandResults.OrderBy(p => p.Price).FirstOrDefault();
@@ -121,67 +114,5 @@ namespace MDS_PROJECT.Controllers
 
             return View();
         } // Index
-
-        /*///////////////////////////////////*/
-        /*-------[ Private functions ]-------*/
-        /*///////////////////////////////////*/
-
-        [NonAction]
-        private List<Product> ParseResults(string results, string store)
-        {
-            string pattern = store == "Carrefour"
-                ? @"Product: (.+?) (\d*[\.,]?\d+)\s*(\w+), Price: (\d+[\.,]?\d*) Lei"
-                : @"Product Name: (.+?)\r\nProduct Subtitle: (.+?)\r\nProduct Price: (\d+[\.,]?\d*)\r\nProduct Quantity: (.+)";
-
-            MatchCollection matches = Regex.Matches(results, pattern);
-
-            return matches.Cast<Match>().Select(m =>
-            {
-                if (store == "Carrefour")
-                {
-                    if (m.Groups.Count != 5)
-                    {
-                        Debug.WriteLine($"Unexpected match format for Carrefour: {m.Value}");
-                        return null;
-                    }
-                    return new Product
-                    {
-                        ItemName = m.Groups[1].Value.Trim(),
-                        Quantity = utils.StringToDecimal(m.Groups[2].Value.Trim()),
-                        MeasureUnit = m.Groups[3].Value.Trim(),
-                        Price = utils.StringToDecimal(m.Groups[4].Value.Trim()),
-                        Currency = "lei",
-                        Store = store
-                    };
-                }
-                else
-                {
-                    if (m.Groups.Count != 5)
-                    {
-                        Debug.WriteLine($"Unexpected match format for Kaufland: {m.Value}");
-                        return null;
-                    }
-                    
-                    var quantitySplit = m.Groups[4].Value.Trim().Split(' ');
-                    if (quantitySplit.Length != 2)
-                    {
-                        Debug.WriteLine($"Unexpected quantity format for Kaufland: {m.Groups[4].Value}");
-                        return null;
-                    }
-
-                    return new Product
-                    {
-                        ItemName = m.Groups[1].Value.Trim() + " " + m.Groups[2].Value.Trim(),
-                        Quantity = utils.StringToDecimal(quantitySplit[0].Trim()),
-                        MeasureUnit = quantitySplit[1].Trim(),
-                        Price = utils.StringToDecimal(m.Groups[3].Value.Trim()),
-                        Currency = "lei",
-                        Store = store
-                    };
-                }
-            }).Where(item => item != null).ToList();
-        }
-
-        
     }
 }

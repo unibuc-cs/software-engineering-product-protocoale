@@ -16,23 +16,14 @@ namespace MDS_PROJECT.Controllers
     public class ProductController : Controller
     {
         private readonly ApplicationDbContext db; // Database context
-        private readonly UserManager<ApplicationUser> _userManager; // User manager for handling user-related operations
-        private readonly RoleManager<IdentityRole> _roleManager; // Role manager for handling role-related operations
-        private readonly IConfiguration _configuration; // Configuration for accessing settings
         private readonly Utilities utils;
 
         // Constructor to initialize the controller with the necessary dependencies
         public ProductController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration,
             Utilities _utils)
         {
             db = context;
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _configuration = configuration;
             utils = _utils;
         }
 
@@ -41,6 +32,7 @@ namespace MDS_PROJECT.Controllers
         public async Task<IActionResult> SearchBoth(string query, string quantity, string unit, bool exactItemName)
         {
             var quantityNumber = utils.StringToDecimal(quantity);
+
             // Return an empty view if the query is empty
             if (string.IsNullOrEmpty(query))
             {
@@ -51,9 +43,8 @@ namespace MDS_PROJECT.Controllers
             var existingProducts = db.Products.Where(p => p.Searched == query).ToList();
             if (existingProducts.Any())
             {
-                ViewBag.CarrefourResults = existingProducts.Where(p => p.Store == "Carrefour" && (!string.IsNullOrEmpty(quantity) || utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit))).ToList();
-                ViewBag.KauflandResults = existingProducts.Where(p => p.Store == "Kaufland" && (!string.IsNullOrEmpty(quantity) || utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit))).ToList();
-
+                ViewBag.CarrefourResults = utils.FilterItems(existingProducts, quantityNumber, unit, "carrefour");
+                ViewBag.KauflandResults = utils.FilterItems(existingProducts, quantityNumber, unit, "kaufland");
                 return View("Index");
             }
 
@@ -63,21 +54,15 @@ namespace MDS_PROJECT.Controllers
 
             await Task.WhenAll(carrefourTask, kauflandTask);
 
-            var carrefourResults = utils.ParseResults(carrefourTask.Result);
+            var carrefourResults = utils.ParseResults(carrefourTask.Result, "carrefour");
             var kauflandResults = utils.ParseKauflandResults(kauflandTask.Result);
 
-            if (quantityNumber < 0.0m)
-            {
-                carrefourResults = carrefourResults.Where(p => utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit)).ToList();
-                kauflandResults = kauflandResults.Where(p => utils.IsEquivalent(p.Quantity, p.MeasureUnit, quantityNumber, unit)).ToList();
-            }
+            ViewBag.CarrefourResults = utils.FilterItems(carrefourResults, quantityNumber, unit);
+            ViewBag.KauflandResults = utils.FilterItems(kauflandResults, quantityNumber, unit);
 
             await utils.SaveToDatabase(carrefourResults, query);
             await utils.SaveToDatabase(kauflandResults, query);
 
-            ViewBag.CarrefourResults = carrefourResults;
-            ViewBag.KauflandResults = kauflandResults;
-            
             return View("Index");
 
         } // SearchBoth
@@ -85,7 +70,6 @@ namespace MDS_PROJECT.Controllers
         // Action to display the initial search view
         public IActionResult Index()
         {
-            // var viewModel = new SearchViewModel();
             return View();
         }
 

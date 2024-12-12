@@ -100,7 +100,7 @@
                     <ul id="kaufland-results" class="product-list">
                         @foreach (var item in ViewBag.KauflandResults)
                         {
-                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
+                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
                         }
                     </ul>
                 }
