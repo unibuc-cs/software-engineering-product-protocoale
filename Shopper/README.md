@@ -35,7 +35,6 @@ python3 shopper.py "https://carrefour.ro/produse/pulover-tex-dama-craciun-xs-xxl
 ### Example
 ```
 python3 shopper.py "https://carrefour.ro/produse/pulover-tex-dama-craciun-xs-xxl-69-63515656" "https://carrefour.ro/produse/pulover-tex-dama-craciun-xs-xxl-69-63515656"
-
 ```
 
 # Warning: Do NOT close the login window, you will break the program! The window closes automatically.
