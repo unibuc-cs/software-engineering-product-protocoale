@@ -32,19 +32,70 @@
             .totals a:hover {
                 text-decoration: underline;
             }
+    button.btn-outline-light {
+        border: 2px solid #f8f9fa;
+        background-color: transparent;
+        color: #f8f9fa;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    button.btn-outline-light:hover {
+        background-color: #f8f9fa;
+        color: #333;
+        border-color: #f8f9fa;
+    }
+
+    div > button {
+        margin-top: 10px;
+    }
 
     </style>
 </head>
 <body>
-    <!-- HTML Form -->
+    <script>
+        function setQueryValue(name, quantity, unit) {
+            document.getElementById('name_id').value = name;
+            document.getElementById('quantity_id').value = quantity;
+            document.getElementById('unit_id').value = unit;
+        }
+    </script>
+   <div>
+    <p>Try recommended search items:</p>
+    <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'liter')">
+        Apa
+    </button>
+    <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'grams')">
+        Paine
+    </button>
+    <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
+        Lapte
+    </button>
+    </div>
     <div class="container mt-4">
         <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3">
             <div class="col-auto">
-                <input type="text" name="query" class="form-control" placeholder="Caută un produs...">
+                <input type="text" id="name_id" name="query" class="form-control" placeholder="Nume produs...">
             </div>
             <div class="col-auto">
-                <input type="text" name="quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)">
+                <input type="text" id="quantity_id" name="quantity" class="form-control" placeholder="Cantitate (ex. 1.5 sau 1,5)">
             </div>
+
+            <div class="col-auto">
+                <select id="unit_id" name="items[0].Unit" class="form-select" required>
+                    <option value="liter">liter</option>
+                    <option value="ml">ml</option>
+                    <option value="pieces">piece</option>
+                    <option value="grams">gram</option>
+                    <option value="kg">kg</option>
+                 </select>
+            </div>
+
+            <div class="col-auto">
+                <input type="text" id="new-unit" class="form-control" placeholder="Custom unit">
+            </div>
+
             <div class="col-auto">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="exactItemName" value="True">
@@ -105,6 +156,11 @@
     </div>
 
     <script>
+        function setQueryValue(name, quantity) {
+            document.getElementById('name_id').value = name;
+            document.getElementById('quantity_id').value = quantity;
+        }
+
         function redirectToMaps(store) {
             window.location.href = "/Maps?store=" + store;
         }
@@ -210,6 +266,8 @@
             }
             kauflandSortByQuantityAsc = !kauflandSortByQuantityAsc;
         }
+    }
+
     </script>
 </body>
 </html>
