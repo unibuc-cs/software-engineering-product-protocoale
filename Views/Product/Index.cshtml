@@ -60,6 +60,50 @@
             document.getElementById('quantity_id').value = quantity;
             document.getElementById('unit_id').value = unit;
         }
+
+    function addToFavorites() {
+    const name = document.getElementById('name_id').value.trim();
+    const quantity = document.getElementById('quantity_id').value.trim();
+    const unit = document.getElementById('unit_id').value;
+
+    if (!name || !quantity || !unit) {
+        alert('Please fill in all fields to add to favorites.');
+        return;
+    }
+
+    fetch('/Favorites/AddFavorite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, quantity, unit })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to add favorite');
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayFavorite(data);
+    })
+    .catch(error => alert(error.message));
+}
+
+function displayFavorite(favorite) {
+    const favoritesList = document.getElementById('favorites-list');
+
+    // Create a button for the favorite item
+    const favoriteItem = document.createElement('button');
+    favoriteItem.type = 'button';
+    favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
+    favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
+    favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
+
+    // Add the button to the favorites list
+    favoritesList.appendChild(favoriteItem);
+}
+
     </script>
    <div>
         <p>Try most popular searches:</p>
@@ -99,31 +143,6 @@
         </div>
     </form>
 </div>
-
-<script>
-    function addToFavorites() {
-        const name = document.getElementById('name_id').value.trim();
-        const quantity = document.getElementById('quantity_id').value.trim();
-        const unit = document.getElementById('unit_id').value;
-
-        if (!name || !quantity || !unit) {
-            alert('Please fill in all fields to add to favorites.');
-            return;
-        }
-
-        const favoritesList = document.getElementById('favorites-list');
-
-        // Create a button for the favorite item
-        const favoriteItem = document.createElement('button');
-        favoriteItem.type = 'button';
-        favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
-        favoriteItem.innerText = `${name} - ${quantity} ${unit}`;
-        favoriteItem.onclick = () => setQueryValue(name, quantity, unit);
-
-        favoritesList.appendChild(favoriteItem
-    }
-</script>
-
 
 <!-- Favorites List -->
 <div class="container mt-4">
@@ -298,4 +317,19 @@
 
     </script>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/Favorites/GetFavorites')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load favorites');
+                }
+                return response.json();
+            })
+            .then(favorites => {
+                favorites.forEach(displayFavorite);
+            })
+            .catch(error => console.error('Error fetching favorites:', error));
+    });
+</script>
 </html>
