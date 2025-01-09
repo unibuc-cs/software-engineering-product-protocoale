@@ -2,7 +2,7 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
-def get_product_info(query):
+def get_product_info(query, exact):
     url = f"https://www.carrefour.ro/catalogsearch/result/?q={query}"
 
     # Send a GET request to the URL and retrieve the HTML content
@@ -31,8 +31,11 @@ def get_product_info(query):
             price_amount = price_element['data-price-amount'] if price_element else 'N/A'
 
             # Append product information to the list
-            #if query.lower() in name.lower().split(): daca vreau sa verific exact sa apara paine
-            product_info.append({'name': name, 'price': price_amount})
+            if exact:
+                if query.lower() in name.lower().split():
+                    product_info.append({'name': name, 'price': price_amount})
+            else:
+                product_info.append({'name': name, 'price': price_amount})
 
         return product_info
     else:
@@ -40,15 +43,19 @@ def get_product_info(query):
         return None
 
 if __name__ == "__main__":
-    #print("INCEPE PYTHONULL")
-    if len(sys.argv) != 2:
-        print("Usage: python_script.py <query>")
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python_script.py <query> [exact]")
         sys.exit(1)
 
     query = sys.argv[1]
-    products = get_product_info(query)
+    exact = False
+    if len(sys.argv) == 3:
+        exact = True
+
+    products = get_product_info(query, exact)
     if products:
         for product in products:
-            print(f"Product: {product['name']}, Price: {product['price']} Lei")
+            print(f"{product['name']}\n{product['price']}")
+            print("-" * 50)
     else:
         print("No products found.")

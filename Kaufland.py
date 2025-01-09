@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode  # Import the unidecode module
 
-def scrape_kaufland(query):
+def scrape_kaufland(query, exact):
     # URL of the page to scrape
     url = f"https://www.kaufland.ro/cautarii.html?q={query}"
 
@@ -15,9 +15,18 @@ def scrape_kaufland(query):
         if response.status_code == 200:
             # Parse the HTML content
             soup = BeautifulSoup(response.content, "html.parser")
+            # print(response.content)
 
             # Find all divs containing product information
-            product_divs = soup.find_all("div", class_="g-col t-search-result__list-item")
+            product_divs = soup.find_all("div", class_="t-search-result__list-item")
+            
+            if len(product_divs) == 0:
+                print("Product Name:", "none")
+                print("Product Subtitle:", "none")
+                print("Product Price:", "none")
+                print("Product Quantity:", "none")
+                print("-" * 50)
+                return
 
             # Iterate through each product div and extract information
             for div in product_divs:
@@ -44,7 +53,14 @@ def scrape_kaufland(query):
                 product_quantity = unidecode(product_quantity)
 
                 # Print product information
-                if query.lower() in product_name.lower() or query.lower() in product_subtitle.lower():
+                if exact:
+                    if query.lower() in product_name.lower().split() or query.lower() in product_subtitle.lower().split():
+                        print("Product Name:", product_name)
+                        print("Product Subtitle:", product_subtitle)
+                        print("Product Price:", product_price)
+                        print("Product Quantity:", product_quantity)
+                        print("-" * 50)
+                else:
                     print("Product Name:", product_name)
                     print("Product Subtitle:", product_subtitle)
                     print("Product Price:", product_price)
@@ -58,8 +74,12 @@ def scrape_kaufland(query):
         print(f"An error occurred: {e}")
 
 # Extract the query from command line arguments
-if len(sys.argv) > 1:
-    query = " ".join(sys.argv[1:])
-    scrape_kaufland(query)
+if len(sys.argv) > 1 and len(sys.argv) < 4:
+    exact = False
+    query = sys.argv[1]
+    if len(sys.argv) == 3:
+        exact = True
+    scrape_kaufland(query, exact)
 else:
-    print("Please provide a search query.")
+    print(f"Usage: {sys.argv[0]} <query> [exact]") 
+    sys.exit(1)

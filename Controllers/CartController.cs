@@ -1,5 +1,6 @@
 ﻿using MDS_PROJECT.Data;
 using MDS_PROJECT.Models;
+using MDS_PROJECT.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Text;
@@ -9,299 +10,109 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Globalization;
 
+
 namespace MDS_PROJECT.Controllers
 {
     public class CartController : Controller
     {
-        public class CartViewModel
-        {
-            public List<CartItem> Items { get; set; } = new List<CartItem>();
-            public string CarrefourTotal { get; set; }
-            public string KauflandTotal { get; set; }
-        }
+        private readonly ApplicationDbContext db;
+        private readonly Utilities utils;
 
         public class CartItem
         {
             public string ItemName { get; set; }
             public string Quantity { get; set; }
-            public string Unit { get; set; }
+            public string MeasureUnit { get; set; }
             public string CarrefourMessage { get; set; }
             public string KauflandMessage { get; set; }
-            public string CarrefourStoreItemName { get; set; }
-            public string KauflandStoreItemName { get; set; }
             public int Multiplier { get; set; } = 1; // Default to 1 if not specified
         }
 
-        public class ItemResult
+        public CartController(
+            ApplicationDbContext _db, 
+            Utilities _utils    
+        )
         {
-            public string ItemName { get; set; }
-            public string Quantity { get; set; }
-            public string MeasureQuantity { get; set; }
-            public string Price { get; set; }
-            public string Store { get; set; }
-            public string Searched { get; set; }
-
-            public ItemResult() { }
-
-            public ItemResult(Product product)
-            {
-                ItemName = product.ItemName;
-                Quantity = product.Quantity;
-                MeasureQuantity = product.MeasureQuantity;
-                Price = product.Price;
-                Store = product.Store;
-                Searched = product.Searched;
-            }
+            db = _db;
+            utils = _utils;
         }
 
-        private readonly ApplicationDbContext _db;
-        private readonly IConfiguration _configuration;
-
-        public CartController(ApplicationDbContext db, IConfiguration configuration)
-        {
-            _db = db;
-            _configuration = configuration;
-        }
-
+        [HttpGet]
         public IActionResult Index()
         {
-            var viewModel = new CartViewModel();
-            return View(viewModel);
+            return View();
         }
 
         [HttpPost]
         public async Task<IActionResult> Index(List<CartItem> items, bool exactItemName = false)
         {
-            var cartViewModel = new CartViewModel { Items = items };
             decimal carrefourTotal = 0;
             decimal kauflandTotal = 0;
 
             foreach (var item in items)
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                var existingProducts = _db.Products
-                                          .Where(p => p.Searched == item.ItemName)
-                                          .ToList();
-                stopwatch.Stop();
-                Debug.WriteLine($"Database query for {item.ItemName} took {stopwatch.ElapsedMilliseconds} ms");
+                var itemQuantity = utils.StringToDecimal(item.Quantity);
+                item.CarrefourMessage = "Not found in Carrefour";
+                item.KauflandMessage = "Not found in Kaufland";
 
-                var carrefourMessage = "Not found in Carrefour";
-                var kauflandMessage = "Not found in Kaufland";
-                var carrefourStoreItemName = string.Empty;
-                var kauflandStoreItemName = string.Empty;
+                var existingProducts = db.Products
+                                        .Where(p => p.Searched == item.ItemName)
+                                        .ToList();
 
-                if (existingProducts.Any())
+                List<Product> carrefourResults;
+                List<Product> kauflandResults;
+                bool fromDatabase = false;
+
+                if (existingProducts.Any()) // first search in the database for products
                 {
-                    var carrefourItems = existingProducts.Where(p => p.Store == "Carrefour").Select(p => new ItemResult(p)).ToList();
-                    var kauflandItems = existingProducts.Where(p => p.Store == "Kaufland").Select(p => new ItemResult(p)).ToList();
-
-                    carrefourItems = FilterItems(carrefourItems, item.Quantity);
-                    kauflandItems = FilterItems(kauflandItems, item.Quantity);
-
-                    var cheapestCarrefourItem = carrefourItems.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-                    var cheapestKauflandItem = kauflandItems.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-
-                    if (cheapestCarrefourItem != null)
-                    {
-                        carrefourTotal += ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
-                        carrefourMessage = $"{cheapestCarrefourItem.ItemName}: {cheapestCarrefourItem.Price} Lei";
-                        carrefourStoreItemName = cheapestCarrefourItem.ItemName;
-                    }
-
-                    if (cheapestKauflandItem != null)
-                    {
-                        kauflandTotal += ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
-                        kauflandMessage = $"{cheapestKauflandItem.ItemName}: {cheapestKauflandItem.Price} Lei";
-                        kauflandStoreItemName = cheapestKauflandItem.ItemName;
-                    }
+                    carrefourResults = utils.FilterItems(existingProducts, itemQuantity, item.MeasureUnit, "carrefour");
+                    kauflandResults = utils.FilterItems(existingProducts, itemQuantity, item.MeasureUnit, "kaufland");
+                    fromDatabase = true;
                 }
-                else
+                else // if there are no items in the database we start the scripts to search in sotres.
                 {
-                    var carrefourTask = GetSearchResult("Carrefour.py", item.ItemName, exactItemName);
-                    var kauflandTask = GetSearchResult("Kaufland.py", item.ItemName, exactItemName);
+                    // Defining scraper scripts and parameters
+                    var carrefourTask = utils.StartSearchScript("Carrefour.py", item.ItemName, exactItemName);
+                    var kauflandTask = utils.StartSearchScript("Kaufland.py", item.ItemName, exactItemName);
 
+                    // Starting and awaiting scrapers
                     await Task.WhenAll(carrefourTask, kauflandTask);
+                    
+                    // Get results
+                    carrefourResults = utils.ParseResults(carrefourTask.Result, "Carrefour");
+                    kauflandResults = utils.ParseResults(kauflandTask.Result, "Kaufland");
+                    carrefourResults = utils.FilterItems(carrefourResults, itemQuantity, item.MeasureUnit);
+                    kauflandResults = utils.FilterItems(kauflandResults, itemQuantity, item.MeasureUnit);
 
-                    var carrefourResults = ParseResults(carrefourTask.Result, "Carrefour");
-                    var kauflandResults = ParseResults(kauflandTask.Result, "Kaufland");
-
-                    carrefourResults = FilterItems(carrefourResults, item.Quantity);
-                    kauflandResults = FilterItems(kauflandResults, item.Quantity);
-
-                    var cheapestCarrefourItem = carrefourResults.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-                    var cheapestKauflandItem = kauflandResults.OrderBy(p => ParsePrice(p.Price)).FirstOrDefault();
-
-                    if (cheapestCarrefourItem != null)
-                    {
-                        carrefourTotal += ParsePrice(cheapestCarrefourItem.Price) * item.Multiplier;
-                        carrefourMessage = $"{cheapestCarrefourItem.ItemName}: {cheapestCarrefourItem.Price} Lei";
-                        carrefourStoreItemName = cheapestCarrefourItem.ItemName;
-                        SaveProductToDatabase(cheapestCarrefourItem, item.ItemName);
-                    }
-
-                    if (cheapestKauflandItem != null)
-                    {
-                        kauflandTotal += ParsePrice(cheapestKauflandItem.Price) * item.Multiplier;
-                        kauflandMessage = $"{cheapestKauflandItem.ItemName}: {cheapestKauflandItem.Price} Lei";
-                        kauflandStoreItemName = cheapestKauflandItem.ItemName;
-                        SaveProductToDatabase(cheapestKauflandItem, item.ItemName);
-                    }
                 }
 
-                item.CarrefourMessage = carrefourMessage;
-                item.KauflandMessage = kauflandMessage;
-                item.CarrefourStoreItemName = carrefourStoreItemName;
-                item.KauflandStoreItemName = kauflandStoreItemName;
-            }
 
-            cartViewModel.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
-            cartViewModel.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
+                var cheapestCarrefourItem = carrefourResults.OrderBy(p => p.Price).FirstOrDefault();
+                var cheapestKauflandItem = kauflandResults.OrderBy(p => p.Price).FirstOrDefault();
 
-            return View(cartViewModel);
-        }
-
-        private async Task<string> GetSearchResult(string scriptPath, string query, bool exactItemName)
-        {
-            string pythonExePath = _configuration["PathVariables:PythonExePath"];
-            string scriptFolderPath = _configuration["PathVariables:ScriptFolderPath"];
-            string fullScriptPath = Path.Combine(scriptFolderPath, exactItemName ? scriptPath.Replace(".py", "Exact.py") : scriptPath);
-
-            Debug.WriteLine($"Executing command: {pythonExePath} {fullScriptPath} {query}");
-
-            ProcessStartInfo start = new ProcessStartInfo
-            {
-                FileName = pythonExePath,
-                Arguments = $"{fullScriptPath} \"{query}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8
-            };
-
-            using (Process process = Process.Start(start))
-            {
-                using (StreamReader outputReader = process.StandardOutput)
-                using (StreamReader errorReader = process.StandardError)
+                if (cheapestCarrefourItem != null)
                 {
-                    string result = await outputReader.ReadToEndAsync();
-                    string error = await errorReader.ReadToEndAsync();
+                    carrefourTotal += cheapestCarrefourItem.Price * item.Multiplier;
+                    item.CarrefourMessage = $"{cheapestCarrefourItem.ItemName}: {cheapestCarrefourItem.Price} {cheapestCarrefourItem.Currency}";
+                    if (!fromDatabase)
+                        await utils.SaveToDatabase(cheapestCarrefourItem, item.ItemName);
 
-                    if (process.ExitCode != 0)
-                    {
-                        Debug.WriteLine($"Python script error output: {error}");
-                        throw new Exception($"Python script error: {error}");
-                    }
-
-                    return result;
                 }
-            }
-        }
 
-        private List<ItemResult> FilterItems(List<ItemResult> items, string quantity)
-        {
-            var normalizedQuantities = GetEquivalentQuantities(quantity);
-            return items.Where(p => normalizedQuantities.Contains(NormalizeQuantity(p.Quantity))).ToList();
-        }
-
-        private List<string> GetEquivalentQuantities(string quantity)
-        {
-            var normalizedQuantity = NormalizeQuantity(quantity);
-            var equivalents = new List<string> { normalizedQuantity };
-
-            if (decimal.TryParse(normalizedQuantity, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qty))
-            {
-                equivalents.Add((qty * 1000).ToString("F0", CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString("F3", CultureInfo.InvariantCulture));
-                equivalents.Add(qty.ToString("F1", CultureInfo.InvariantCulture).Replace('.', ','));
-                equivalents.Add((qty * 1000).ToString(CultureInfo.InvariantCulture));
-                equivalents.Add((qty / 1000).ToString(CultureInfo.InvariantCulture));
-            }
-
-            return equivalents;
-        }
-
-        private string NormalizeQuantity(string quantity)
-        {
-            if (string.IsNullOrEmpty(quantity))
-            {
-                return string.Empty;
-            }
-            return quantity.Replace(',', '.');
-        }
-
-        private decimal ParsePrice(string price)
-        {
-            var cleanedPrice = Regex.Replace(price, @"[^\d,\.]", "");
-            return decimal.Parse(cleanedPrice.Replace(',', '.'), CultureInfo.InvariantCulture);
-        }
-
-        private List<ItemResult> ParseResults(string results, string store)
-        {
-            string pattern = store == "Carrefour"
-                ? @"Product: (.+?) (\d*[\.,]?\d+)\s*(\w+), Price: (\d+[\.,]?\d*) Lei"
-                : @"Product Name: (.+?)\r\nProduct Subtitle: (.+?)\r\nProduct Price: (\d+[\.,]?\d*)\r\nProduct Quantity: (.+)";
-
-            MatchCollection matches = Regex.Matches(results, pattern);
-            return matches.Cast<Match>().Select(m =>
-            {
-                if (store == "Carrefour")
+                if (cheapestKauflandItem != null)
                 {
-                    if (m.Groups.Count != 5)
-                    {
-                        Debug.WriteLine($"Unexpected match format for Carrefour: {m.Value}");
-                        return null;
-                    }
-                    return new ItemResult
-                    {
-                        ItemName = m.Groups[1].Value.Trim(),
-                        Quantity = m.Groups[2].Value.Trim(),
-                        MeasureQuantity = m.Groups[3].Value.Trim(),
-                        Price = m.Groups[4].Value.Trim(),
-                        Store = store
-                    };
+                    kauflandTotal += cheapestKauflandItem.Price * item.Multiplier;
+                    item.KauflandMessage = $"{cheapestKauflandItem.ItemName}: {cheapestKauflandItem.Price} {cheapestKauflandItem.Currency}";
+                    if (!fromDatabase)
+                        await utils.SaveToDatabase(cheapestKauflandItem, item.ItemName);
                 }
-                else
-                {
-                    if (m.Groups.Count != 5)
-                    {
-                        Debug.WriteLine($"Unexpected match format for Kaufland: {m.Value}");
-                        return null;
-                    }
-                    var quantitySplit = m.Groups[4].Value.Trim().Split(' ');
-                    if (quantitySplit.Length != 2)
-                    {
-                        Debug.WriteLine($"Unexpected quantity format for Kaufland: {m.Groups[4].Value}");
-                        return null;
-                    }
-                    return new ItemResult
-                    {
-                        ItemName = m.Groups[1].Value.Trim() + " " + m.Groups[2].Value.Trim(),
-                        Quantity = quantitySplit[0].Trim(),
-                        MeasureQuantity = quantitySplit[1].Trim(),
-                        Price = m.Groups[3].Value.Trim() + " Lei",
-                        Store = store
-                    };
-                }
-            }).Where(item => item != null).ToList();
-        }
+            } // foreach
 
-        private void SaveProductToDatabase(ItemResult itemResult, string searchedItem)
-        {
-            var product = new Product
-            {
-                ItemName = itemResult.ItemName,
-                Quantity = itemResult.Quantity,
-                MeasureQuantity = itemResult.MeasureQuantity,
-                Price = itemResult.Price,
-                Store = itemResult.Store,
-                Searched = searchedItem
-            };
+            ViewBag.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
+            ViewBag.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
+            ViewBag.Items = items;
 
-            if (!_db.Products.Any(p => p.ItemName == product.ItemName && p.Quantity == product.Quantity && p.MeasureQuantity == product.MeasureQuantity && p.Store == product.Store))
-            {
-                _db.Products.Add(product);
-                _db.SaveChanges();
-            }
-        }
+            return View();
+        } // Index
     }
 }

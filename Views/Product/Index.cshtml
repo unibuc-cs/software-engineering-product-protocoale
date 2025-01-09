@@ -1,5 +1,3 @@
-@model MDS_PROJECT.Controllers.ProductController.SearchViewModel
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,6 +52,36 @@
     </style>
 </head>
 <body>
+    <!-- HTML Form -->
+    <div class="container mt-4">
+        <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3">
+            <div class="col-auto">
+                <input type="text" name="query" class="form-control" placeholder="Caută un produs...">
+            </div>
+            <div class="col-auto">
+                <input type="text" name="quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)">
+            </div>
+            <div class="col-auto">
+                <!-- <label for="items[0].MeasureUnit" class="form-label">MeasureUnit:</label> -->
+                <select name="unit" class="form-select" required>
+                    <option value="l">liter</option>
+                    <option value="ml">ml</option>
+                    <option value="piece">piece</option>
+                    <option value="g">gram</option>
+                    <option value="kg">kg</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="exactItemName" value="True">
+                    <label class="form-check-label" for="exactItemName">Exact Item Name</label>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary mb-3">Caută</button>
+            </div>
+        </form>
+      
     <script>
         function setQueryValue(name, quantity, unit) {
             document.getElementById('name_id').value = name;
@@ -152,13 +180,11 @@ function displayFavorite(favorite) {
     </div>
 </div>
 
-
-
         <!-- Results Section -->
         <div class="results-container mt-5">
             <div class="results">
                 <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
-                @if (Model != null && Model.CarrefourResults != null && Model.CarrefourResults.Any())
+                @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
                 {
                     <div class="mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
@@ -166,9 +192,9 @@ function displayFavorite(favorite) {
                         <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
                     </div>
                     <ul id="carrefour-results" class="product-list">
-                        @foreach (var item in Model.CarrefourResults)
+                        @foreach (var item in ViewBag.CarrefourResults)
                         {
-                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
+                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
                         }
                     </ul>
                 }
@@ -180,7 +206,7 @@ function displayFavorite(favorite) {
 
             <div class="results">
                 <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
-                @if (Model != null && Model.KauflandResults != null && Model.KauflandResults.Any())
+                @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
                 {
                     <div class="mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
@@ -188,9 +214,9 @@ function displayFavorite(favorite) {
                         <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
                     </div>
                     <ul id="kaufland-results" class="product-list">
-                        @foreach (var item in Model.KauflandResults)
+                        @foreach (var item in ViewBag.KauflandResults)
                         {
-                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureQuantity, @item.Price Lei</li>
+                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
                         }
                     </ul>
                 }
