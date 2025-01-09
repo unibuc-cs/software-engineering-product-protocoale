@@ -30,6 +30,24 @@
             .totals a:hover {
                 text-decoration: underline;
             }
+    button.btn-outline-light {
+        border: 2px solid #f8f9fa;
+        background-color: transparent;
+        color: #f8f9fa;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    button.btn-outline-light:hover {
+        background-color: #f8f9fa;
+        color: #333;
+        border-color: #f8f9fa;
+    }
+
+    div > button {
+        margin-top: 10px;
+    }
 
     </style>
 </head>
@@ -63,6 +81,104 @@
                 <button type="submit" class="btn btn-primary mb-3">Caută</button>
             </div>
         </form>
+      
+    <script>
+        function setQueryValue(name, quantity, unit) {
+            document.getElementById('name_id').value = name;
+            document.getElementById('quantity_id').value = quantity;
+            document.getElementById('unit_id').value = unit;
+        }
+
+    function addToFavorites() {
+    const name = document.getElementById('name_id').value.trim();
+    const quantity = document.getElementById('quantity_id').value.trim();
+    const unit = document.getElementById('unit_id').value;
+
+    if (!name || !quantity || !unit) {
+        alert('Please fill in all fields to add to favorites.');
+        return;
+    }
+
+    fetch('/Favorites/AddFavorite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, quantity, unit })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to add favorite');
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayFavorite(data);
+    })
+    .catch(error => alert(error.message));
+}
+
+function displayFavorite(favorite) {
+    const favoritesList = document.getElementById('favorites-list');
+
+    // Create a button for the favorite item
+    const favoriteItem = document.createElement('button');
+    favoriteItem.type = 'button';
+    favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
+    favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
+    favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
+
+    // Add the button to the favorites list
+    favoritesList.appendChild(favoriteItem);
+}
+
+    </script>
+   <div>
+        <p>Try most popular searches:</p>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'liter')">
+            Apa
+        </button>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'grams')">
+            Paine
+        </button>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
+            Lapte
+        </button>
+    </div>
+
+<div class="container mt-4">
+    <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3 align-items-center">
+        <div class="col-auto">
+            <input type="text" id="name_id" name="query" class="form-control" placeholder="Nume produs...">
+        </div>
+        <div class="col-auto">
+            <input type="text" id="quantity_id" name="quantity" class="form-control" placeholder="Cantitate (ex. 1.5 sau 1,5)">
+        </div>
+        <div class="col-auto">
+            <select id="unit_id" name="items[0].Unit" class="form-select" required>
+                <option value="liter">liter</option>
+                <option value="ml">ml</option>
+                <option value="pieces">piece</option>
+                <option value="grams">gram</option>
+                <option value="kg">kg</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-success mb-3" onclick="addToFavorites()">Save to Favorites</button>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3">Caută</button>
+        </div>
+    </form>
+</div>
+
+<!-- Favorites List -->
+<div class="container mt-4">
+    <h5>Favorites:</h5>
+    <div id="favorites-list" class="d-flex flex-wrap gap-2">
+        <!-- Favorite items will appear here -->
+    </div>
+</div>
 
         <!-- Results Section -->
         <div class="results-container mt-5">
@@ -113,6 +229,11 @@
     </div>
 
     <script>
+        function setQueryValue(name, quantity) {
+            document.getElementById('name_id').value = name;
+            document.getElementById('quantity_id').value = quantity;
+        }
+
         function redirectToMaps(store) {
             window.location.href = "/Maps?store=" + store;
         }
@@ -218,6 +339,23 @@
             }
             kauflandSortByQuantityAsc = !kauflandSortByQuantityAsc;
         }
+    }
+
     </script>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/Favorites/GetFavorites')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load favorites');
+                }
+                return response.json();
+            })
+            .then(favorites => {
+                favorites.forEach(displayFavorite);
+            })
+            .catch(error => console.error('Error fetching favorites:', error));
+    });
+</script>
 </html>

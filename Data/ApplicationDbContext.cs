@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
-// PASUL 3 - useri si roluri
-
 namespace MDS_PROJECT.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -16,5 +13,7 @@ namespace MDS_PROJECT.Data
         }
         public DbSet<Product> Products {  get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<FavoriteProduct> FavoriteItems { get; set; }
+
     }
 }
