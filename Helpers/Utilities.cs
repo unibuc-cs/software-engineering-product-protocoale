@@ -140,7 +140,6 @@ namespace MDS_PROJECT.Helpers
 
                     if (process.ExitCode != 0)
                     {
-                        System.Console.WriteLine($"Python script error output: {error}");
                         throw new Exception($"Python script error: {error}");
                     }
 
@@ -165,6 +164,7 @@ namespace MDS_PROJECT.Helpers
 
         public List<Product> ParseCarrefourResults(string results)
         {
+            results = results.Replace("\r", "");
             string delimiter = new string('-', 50);
             var products = results.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
             List<Product> result = new List<Product>();
