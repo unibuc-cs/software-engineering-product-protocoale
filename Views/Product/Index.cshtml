@@ -1,251 +1,162 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-OERcA2mA7U6Tz8oWbklKepL0LGV6MyCAp6xQmKQ4iNuORm1gYkPi7dBIYlGq2D3T" crossorigin="anonymous">
-    <style>
-        body {
-            background-color: #333;
-            color: white;
-        }
+@{
+    ViewBag.Title = "Search";
+}
 
-        .form-label {
-            margin-top: 10px;
-        }
+<section class="pt-4 bg-light d-flex justify-content-evenly align-items-center flex-grow-1">
+    <div class="w-50">
+        @using (Html.BeginForm("Search", "Product", FormMethod.Post, new { @class = "form-control bg-light" })) 
+        {
 
-        .cart-item {
-            border: 1px solid #555;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        h1, h2 {
-            color: white;
-        }
-
-        .totals a {
-            color: lightgreen;
-            text-decoration: none;
-        }
-
-            .totals a:hover {
-                text-decoration: underline;
-            }
-    button.btn-outline-light {
-        border: 2px solid #f8f9fa;
-        background-color: transparent;
-        color: #f8f9fa;
-        font-size: 1rem;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    button.btn-outline-light:hover {
-        background-color: #f8f9fa;
-        color: #333;
-        border-color: #f8f9fa;
-    }
-
-    div > button {
-        margin-top: 10px;
-    }
-
-    </style>
-</head>
-<body>
-    <!-- HTML Form -->
-    <div class="container mt-4">
-        <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3">
-            <div class="col-auto">
-                <input type="text" name="query" class="form-control" placeholder="Caută un produs...">
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("query", "Search Product", new { @class = "form-label" })
+                @Html.TextBox("query", null, new { @class = "form-control", id = "query", placeholder = "Product name..." })
             </div>
-            <div class="col-auto">
-                <input type="text" name="quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)">
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("quantity", "Quantity", new { @class = "form-label" })
+                @Html.TextBox("quantity", null, new { @class = "form-control", id = "quantity", placeholder = "Enter quantity (e.g., 1.5 or 1,5)" })
             </div>
-            <div class="col-auto">
-                <!-- <label for="items[0].MeasureUnit" class="form-label">MeasureUnit:</label> -->
-                <select name="unit" class="form-select" required>
-                    <option value="l">liter</option>
-                    <option value="ml">ml</option>
-                    <option value="piece">piece</option>
-                    <option value="g">gram</option>
-                    <option value="kg">kg</option>
-                </select>
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("unit", "Unit", new { @class = "form-label" })
+                @Html.DropDownList("unit", new SelectList(new[]
+                    {
+                        new { Value = "l", Text = "L" },
+                        new { Value = "ml", Text = "mL" },
+                        new { Value = "piece", Text = "piece" },
+                        new { Value = "g", Text = "g" },
+                        new { Value = "kg", Text = "kg" }
+                    }, "Value", "Text"), "Select Unit", new { @class = "form-select", id = "unit", required = "required" })
             </div>
-            <div class="col-auto">
+            <div class="col-auto mx-5 my-4">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="exactItemName" value="True">
-                    <label class="form-check-label" for="exactItemName">Exact Item Name</label>
+                    @Html.Label("exactItemName", "Exact Item Name", new { @class = "form-check-label" })
+                    @Html.CheckBox("exactItemName", new { @class = "form-check-input", id = "exactItemName" })
                 </div>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary mb-3">Caută</button>
+            <div class="col-auto mx-5 my-2">
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-primary mx-2">Search</button>
+                    <button type="button" class="btn btn-success mx-2" onclick="addToFavorites()">Save to Favorites</button>
+                </div>
             </div>
-        </form>
+        }
+        <div class="mt-3 d-flex justify-content-around">
+            <div class="d-flex flex-column justify-content-center">
+                <p class="text-center">Try most popular searches:</p>
+                <div>
+                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'l')">
+                        Apa
+                    </button>
+                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'g')">
+                        Paine
+                    </button>
+                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
+                        Lapte
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex flex-column justify-content-center">
+                <p class="text-center">Favourites:</p>
+                <div id="favourites-buttons"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-container mt-5">
+        <div class="results">
+            <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
+            @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByName()">Sort by Name</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
+                </div>
+                <ul id="carrefour-results" class="product-list">
+                    @foreach (var item in ViewBag.CarrefourResults)
+                    {
+                        <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="no-results">Nu s-au găsit rezultate pentru Carrefour.</p>
+            }
+        </div>
+
+        <div class="results">
+            <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
+            @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByName()">Sort by Name</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
+                </div>
+                <ul id="kaufland-results" class="product-list">
+                    @foreach (var item in ViewBag.KauflandResults)
+                    {
+                        <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="no-results">Nu s-au găsit rezultate pentru Kaufland.</p>
+            }
+        </div>
+    </div>
       
     <script>
-        function setQueryValue(name, quantity, unit) {
-            document.getElementById('name_id').value = name;
-            document.getElementById('quantity_id').value = quantity;
-            document.getElementById('unit_id').value = unit;
+        function setQueryValue(query, quantity, unit) {
+            document.getElementById('query').value = query;
+            document.getElementById('quantity').value = quantity;
+            document.getElementById('unit').value = unit;
         }
 
-    function addToFavorites() {
-    const name = document.getElementById('name_id').value.trim();
-    const quantity = document.getElementById('quantity_id').value.trim();
-    const unit = document.getElementById('unit_id').value;
+        function addToFavorites() {
+            const query = document.getElementById('query').value.trim();
+            const quantity = document.getElementById('quantity').value.trim();
+            const unit = document.getElementById('unit').value;
 
-    if (!name || !quantity || !unit) {
-        alert('Please fill in all fields to add to favorites.');
-        return;
-    }
+            if (!query || !quantity || !unit) {
+                alert('Please fill in all fields to add to favorites.');
+                return;
+            }
 
-    fetch('/Favorites/AddFavorite', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, quantity, unit })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to add favorite');
-        }
-        return response.json();
-    })
-    .then(data => {
-        displayFavorite(data);
-    })
-    .catch(error => alert(error.message));
-}
-
-function displayFavorite(favorite) {
-    const favoritesList = document.getElementById('favorites-list');
-
-    // Create a button for the favorite item
-    const favoriteItem = document.createElement('button');
-    favoriteItem.type = 'button';
-    favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
-    favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
-    favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
-
-    // Add the button to the favorites list
-    favoritesList.appendChild(favoriteItem);
-}
-
-    </script>
-   <div>
-        <p>Try most popular searches:</p>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'liter')">
-            Apa
-        </button>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'grams')">
-            Paine
-        </button>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
-            Lapte
-        </button>
-    </div>
-
-<div class="container mt-4">
-    <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3 align-items-center">
-        <div class="col-auto">
-            <input type="text" id="name_id" name="query" class="form-control" placeholder="Nume produs...">
-        </div>
-        <div class="col-auto">
-            <input type="text" id="quantity_id" name="quantity" class="form-control" placeholder="Cantitate (ex. 1.5 sau 1,5)">
-        </div>
-        <div class="col-auto">
-            <select id="unit_id" name="items[0].Unit" class="form-select" required>
-                <option value="liter">liter</option>
-                <option value="ml">ml</option>
-                <option value="pieces">piece</option>
-                <option value="grams">gram</option>
-                <option value="kg">kg</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <button type="button" class="btn btn-success mb-3" onclick="addToFavorites()">Save to Favorites</button>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary mb-3">Caută</button>
-        </div>
-    </form>
-</div>
-
-<!-- Favorites List -->
-<div class="container mt-4">
-    <h5>Favorites:</h5>
-    <div id="favorites-list" class="d-flex flex-wrap gap-2">
-        <!-- Favorite items will appear here -->
-    </div>
-</div>
-
-        <!-- Results Section -->
-        <div class="results-container mt-5">
-            <div class="results">
-                <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
-                @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
-                {
-                    <div class="mb-3">
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByName()">Sort by Name</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
-                    </div>
-                    <ul id="carrefour-results" class="product-list">
-                        @foreach (var item in ViewBag.CarrefourResults)
-                        {
-                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
-                        }
-                    </ul>
+            fetch('/Favorites/AddFavorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query, quantity, unit })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to add favorite');
                 }
-                else
-                {
-                    <p class="no-results">Nu s-au găsit rezultate pentru Carrefour.</p>
-                }
-            </div>
-
-            <div class="results">
-                <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
-                @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
-                {
-                    <div class="mb-3">
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByName()">Sort by Name</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
-                    </div>
-                    <ul id="kaufland-results" class="product-list">
-                        @foreach (var item in ViewBag.KauflandResults)
-                        {
-                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="no-results">Nu s-au găsit rezultate pentru Kaufland.</p>
-                }
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function setQueryValue(name, quantity) {
-            document.getElementById('name_id').value = name;
-            document.getElementById('quantity_id').value = quantity;
+                return response.json();
+            })
+            .then(data => {
+                displayFavorite(data);
+            })
+            .catch(error => alert(error.message));
         }
 
-        function redirectToMaps(store) {
-            window.location.href = "/Maps?store=" + store;
-        }
+        function displayFavorite(favorite) {
+            const favoritesList = document.getElementById('favorites-list');
 
-        function getPriceValue(itemText) {
-            var numbers = itemText.match(/\d+([.,]\d+)?/g);
-            return parseFloat(numbers[numbers.length - 1].replace(",", "."));
-        }
+            // Create a button for the favorite item
+            const favoriteItem = document.createElement('button');
+            favoriteItem.type = 'button';
+            favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
+            favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
+            favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
 
-        function getQuantityValue(itemText) {
-            var numbers = itemText.match(/\d+([.,]\d+)?/g);
-            return parseFloat(numbers[numbers.length - 2].replace(",", "."));
+            // Add the button to the favorites list
+            favoritesList.appendChild(favoriteItem);
         }
 
         var carrefourSortByPriceAsc = true;
@@ -339,11 +250,7 @@ function displayFavorite(favorite) {
             }
             kauflandSortByQuantityAsc = !kauflandSortByQuantityAsc;
         }
-    }
 
-    </script>
-</body>
-<script>
     document.addEventListener('DOMContentLoaded', () => {
         fetch('/Favorites/GetFavorites')
             .then(response => {
@@ -357,5 +264,7 @@ function displayFavorite(favorite) {
             })
             .catch(error => console.error('Error fetching favorites:', error));
     });
-</script>
-</html>
+    </script>
+
+
+</section>

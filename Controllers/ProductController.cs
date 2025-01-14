@@ -29,7 +29,7 @@ namespace MDS_PROJECT.Controllers
 
         // Action to handle the search request for products in both stores
         [HttpPost]
-        public async Task<IActionResult> SearchBoth(string query, string quantity, string unit, bool exactItemName)
+        public async Task<IActionResult> Search(string query, string quantity, string unit, bool exactItemName)
         {
             var quantityNumber = utils.StringToDecimal(quantity);
 
@@ -65,7 +65,7 @@ namespace MDS_PROJECT.Controllers
 
             return View("Index");
 
-        } // SearchBoth
+        } // Search
 
         // Action to display the initial search view
         public IActionResult Index()
