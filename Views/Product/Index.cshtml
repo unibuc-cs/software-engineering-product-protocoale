@@ -2,7 +2,7 @@
     ViewBag.Title = "Search";
 }
 
-<section class="pt-4 bg-light d-flex justify-content-evenly align-items-center flex-grow-1">
+<section class="bg-light d-flex justify-content-evenly align-items-center flex-grow-1">
     <div class="w-50">
         @using (Html.BeginForm("Search", "Product", FormMethod.Post, new { @class = "form-control bg-light" })) 
         {
@@ -44,19 +44,22 @@
                 <p class="text-center">Try most popular searches:</p>
                 <div>
                     <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'l')">
-                        Apa
+                        Apa - 1.5 l
                     </button>
-                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'g')">
-                        Paine
+                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Fanina', '1', 'kg')">
+                        Faina - 1 kg
                     </button>
-                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
-                        Lapte
+                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '1', 'l')">
+                        Lapte - 1 l
                     </button>
                 </div>
             </div>
             <div class="d-flex flex-column justify-content-center">
-                <p class="text-center">Favourites:</p>
-                <div id="favourites-buttons"></div>
+                <div class="d-flex">
+                    <p class="text-center">Favourites:</p>
+                    <button id="delete-button" class="btn btn-outline-danger" onclick="deleteButton(false)">Delete</button>
+                </div>
+                <div id="favorites-list"></div>
             </div>
 
         </div>
@@ -65,7 +68,7 @@
     <!-- Results Section -->
     <div class="results-container mt-5">
         <div class="results">
-            <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
+            <h2>Carrefour</h2>
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
@@ -80,40 +83,69 @@
                     }
                 </ul>
             }
-            else
+            else 
             {
-                <p class="no-results">Nu s-au găsit rezultate pentru Carrefour.</p>
+                <p class="no-results">Carrefour results not found.</p>
             }
-        </div>
 
-        <div class="results">
-            <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
-            @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
-            {
-                <div class="mb-3">
-                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByName()">Sort by Name</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
-                </div>
-                <ul id="kaufland-results" class="product-list">
-                    @foreach (var item in ViewBag.KauflandResults)
-                    {
-                        <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <p class="no-results">Nu s-au găsit rezultate pentru Kaufland.</p>
-            }
         </div>
-    </div>
+   </div>
       
     <script>
         function setQueryValue(query, quantity, unit) {
             document.getElementById('query').value = query;
             document.getElementById('quantity').value = quantity;
             document.getElementById('unit').value = unit;
+        }
+
+        function parseFavorite(buttonText) {
+            // Use a regular expression to extract the parts
+            const match = buttonText.match(/^(.*?) - (\d+) (.+)$/);
+
+            if (match) {
+                return {
+                    Query: match[1],          // Extracts the query (e.g., "Apples")
+                    Quantity: parseInt(match[2], 10), // Extracts the quantity (e.g., 5)
+                    Unit: match[3]            // Extracts the unit (e.g., "kg")
+                };
+            } else {
+                throw new Error("String format is invalid");
+            }
+        }
+
+
+ 
+
+        function deleteFromFavorites(query, quantity, unit) {
+            let favorites = localStorage.getItem("favorites");
+            if (favorites === null) {
+                Error("Nothing to delete.");
+                return;
+            }
+
+            favorites = JSON.parse(favorites);
+            newFavorites = [];
+            let deleted = false;
+
+            for (let favorite of favorites)
+            {
+                if (favorite.Query == query && favorite.Quantity == quantity && favorite.Unit == unit)
+                {
+                    deleted = true;
+                    continue;
+                }
+                newFavorites.push(favorite);
+            }
+
+            if (!deleted)
+            {
+                Error("No item found.");
+                return;
+            }
+
+            localStorage.setItem("favorites", JSON.stringify(newFavorites));
+            displayFavorites();
+
         }
 
         function addToFavorites() {
@@ -126,37 +158,72 @@
                 return;
             }
 
-            fetch('/Favorites/AddFavorite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ query, quantity, unit })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to add favorite');
+            let favorites = localStorage.getItem("favorites");
+            if (favorites === undefined)
+            {
+                favorites = [
+                    {Query: query, Quantity: quantity, Unit: unit}
+                ];
+            }
+            else 
+            {
+                favorites = JSON.parse(favorites);
+                if (favorites.length >= 3) {
+                    Error("You cannot add more than 3 items in favorites!");
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
-                displayFavorite(data);
-            })
-            .catch(error => alert(error.message));
+                favorites.push({Query: query, Quantity: quantity, Unit: unit});
+            }
+            localStorage.setItem("favorites", JSON.stringify(favorites));
+
+            displayFavorites();
+        }
+        function deleteButton() {
+            // Get the main button and the container div
+            const button = document.getElementById("delete-button");
+            const favoritesList = document.getElementById("favorites-list");
+
+            // Determine the new class and text based on the current state of the main button
+            const isDark = button.classList.contains("btn-outline-dark");
+            const oldClass = isDark ? "btn-outline-dark" : "btn-outline-danger";
+            const newClass = isDark ? "btn-outline-danger" : "btn-outline-dark";
+            const newText = isDark ? "Delete" : "Stop";
+
+            // Update the main button
+            button.classList.remove(oldClass);
+            button.classList.add(newClass);
+            button.textContent = newText;
+
+
+            displayFavorites();
         }
 
-        function displayFavorite(favorite) {
+        function displayFavorites() {
+            let favorites = localStorage.getItem("favorites");
+
+            if (favorites === null)
+                return;
+            favorites = JSON.parse(favorites);
+
+            const button = document.getElementById("delete-button");
             const favoritesList = document.getElementById('favorites-list');
+            favoritesList.innerHTML = "";
+
+            const isDark = button.classList.contains("btn-outline-dark");
+            const Class = isDark ? "btn-outline-danger" : "btn-outline-dark";
 
             // Create a button for the favorite item
-            const favoriteItem = document.createElement('button');
-            favoriteItem.type = 'button';
-            favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
-            favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
-            favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
+            for (let favorite of favorites) {
+                const favoriteItem = document.createElement('button');
+                favoriteItem.type = 'button';
+                favoriteItem.className = `btn ${Class} rounded-pill px-4 mx-1`;
+                favoriteItem.innerText = `${favorite.Query} - ${favorite.Quantity} ${favorite.Unit}`;
+                favoriteItem.onclick = isDark ? () => deleteFromFavorites(favorite.Query, favorite.Quantity, favorite.Unit)
+                    : () => setQueryValue(favorite.Query, favorite.Quantity, favorite.Unit);
 
-            // Add the button to the favorites list
-            favoritesList.appendChild(favoriteItem);
+                // Add the button to the favorites list
+                favoritesList.appendChild(favoriteItem);
+            }
         }
 
         var carrefourSortByPriceAsc = true;
@@ -205,65 +272,9 @@
             carrefourSortByQuantityAsc = !carrefourSortByQuantityAsc;
         }
 
-        var kauflandSortByPriceAsc = true;
-        var kauflandSortByNameAsc = true;
-        var kauflandSortByQuantityAsc = true;
-
-        function sortKauflandResultsByPrice() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var priceA = getPriceValue(a.innerText);
-                var priceB = getPriceValue(b.innerText);
-                return kauflandSortByPriceAsc ? priceA - priceB : priceB - priceA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByPriceAsc = !kauflandSortByPriceAsc;
-        }
-
-        function sortKauflandResultsByName() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var nameA = a.innerText.split(",")[0].trim();
-                var nameB = b.innerText.split(",")[0].trim();
-                return kauflandSortByNameAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByNameAsc = !kauflandSortByNameAsc;
-        }
-
-        function sortKauflandResultsByQuantity() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var quantityA = getQuantityValue(a.innerText);
-                var quantityB = getQuantityValue(b.innerText);
-                return kauflandSortByQuantityAsc ? quantityA - quantityB : quantityB - quantityA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByQuantityAsc = !kauflandSortByQuantityAsc;
-        }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('/Favorites/GetFavorites')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load favorites');
-                }
-                return response.json();
-            })
-            .then(favorites => {
-                favorites.forEach(displayFavorite);
-            })
-            .catch(error => console.error('Error fetching favorites:', error));
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            displayFavorites();
+        });
     </script>
 
 

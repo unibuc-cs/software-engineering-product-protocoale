@@ -40,6 +40,7 @@ namespace MDS_PROJECT.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            ViewBag.CarrefourTotal = 0;
             return View();
         }
 
@@ -109,7 +110,6 @@ namespace MDS_PROJECT.Controllers
             } // foreach
 
             ViewBag.CarrefourTotal = carrefourTotal.ToString("F2", CultureInfo.InvariantCulture);
-            ViewBag.KauflandTotal = kauflandTotal.ToString("F2", CultureInfo.InvariantCulture);
             ViewBag.Items = items;
 
             return View();

@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace MDS_PROJECT.Controllers
 {
@@ -78,6 +79,49 @@ namespace MDS_PROJECT.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        // Add a new favorite
+        [HttpPost]
+        public async Task<IActionResult> AddFavorite([FromBody] FavoriteProduct favorite)
+        {
+            if (string.IsNullOrWhiteSpace(favorite.Name) || string.IsNullOrWhiteSpace(favorite.Quantity) || string.IsNullOrWhiteSpace(favorite.Unit))
+            {
+                Console.WriteLine($"Name: {favorite.Name}, Quantity: {favorite.Quantity}, Unit: {favorite.Unit}");
+                return BadRequest("All fields are required.");
+            }
+
+            favorite.AddedDate = DateTime.Now; // Set the added date to now
+
+            // Add to the database
+            db.FavoriteItems.Add(favorite);
+            await db.SaveChangesAsync();
+
+            return Ok(favorite); // Return the added favorite item as a response
+        }
+
+        // Get all favorites
+        [HttpGet]
+        public async Task<IActionResult> GetFavorites()
+        {
+            var favorites = await db.FavoriteItems.ToListAsync();
+            return Json(favorites); // Return the list of favorite items as JSON
+        }
+
+        // Optionally: Delete a favorite
+        [HttpPost]
+        public async Task<IActionResult> DeleteFavorite(int id)
+        {
+            var favorite = await db.FavoriteItems.FindAsync(id);
+            if (favorite == null)
+            {
+                return NotFound();
+            }
+
+            db.FavoriteItems.Remove(favorite);
+            await db.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
