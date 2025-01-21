@@ -1,70 +1,62 @@
 import sys
-import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import requests
+from bs4 import BeautifulSoup
 
-# Check if the query is provided as a command-line argument
-if len(sys.argv) < 2:
-    print("Usage: python_script.py <query>")
-    sys.exit(1)
+def get_product_info(query, exact):
+    url = f"https://www.auchan.ro/{query}"
 
-# Extract the query from the command-line argument
-query = "+".join(sys.argv[1:])
+    # Send a GET request to the URL and retrieve the HTML content
+    response = requests.get(url)
 
-# Start a new instance of Chrome
-driver = webdriver.Chrome()
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-# Load the webpage with the provided query
-driver.get(f"https://www.auchan.ro/search/{query}?_q={query}&map=ft")
+        # Find all product containers
+        products = soup.find_all('section', class_='vtex-product-summary-2-x-container vtex-product-summary-2-x-container--defaultShelf vtex-product-summary-2-x-container--searchShelf vtex-product-summary-2-x-containerNormal vtex-product-summary-2-x-containerNormal--defaultShelf vtex-product-summary-2-x-containerNormal--searchShelf overflow-hidden br3 h-100 w-100 flex flex-column justify-between center tc')
 
-# Wait for the page to load and display product summaries
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'article[class*="vtex-product-summary"]')))
-except Exception as e:
-    print("Error waiting for product summary articles:", e)
+        # Extract product information (name and price) for each container
+        product_info = []
+        for product in products:
+            # Extract product id
+            
+            product_url=f"https://www.auchan.ro/{product.find('a', class_='vtex-product-summary-2-x-clearLink vtex-product-summary-2-x-clearLink--defaultShelf vtex-product-summary-2-x-clearLink--searchShelf h-100 flex flex-column').get('href')}"
+            name=product.find('span', class_='vtex-product-summary-2-x-productBrand vtex-product-summary-2-x-productBrand--defaultShelf vtex-product-summary-2-x-brandName vtex-product-summary-2-x-brandName--defaultShelf t-body').get_text()
+            
+            price_element=product.find('div', class_='auchan-store-theme-4-x-pricePlpContainer')
+            integer=price_element.find('span', class_='vtex-product-price-1-x-currencyInteger vtex-product-price-1-x-currencyInteger--shelfPrice').get_text()
+            fraction=price_element.find('span', class_='vtex-product-price-1-x-currencyFraction vtex-product-price-1-x-currencyFraction--shelfPrice').get_text()
 
+            price_amount=integer+','+fraction
+                       
+            # Append product information to the list
+            if exact:
+                if query.lower() in name.lower().split():
+                    product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
+            else:
+                product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
 
-# Function to scroll down and load more items
-def scroll_down_and_load_more(driver, last_height):
-    while True:
-        # Scroll down to the bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-        # Wait for new elements to load
-        time.sleep(5)
-
-        # Check if there's a "Load More" button and click it if present
-        try:
-            load_more_button = driver.find_element(By.CSS_SELECTOR, 'button[class*="load-more"]')
-            if load_more_button:
-                load_more_button.click()
-                time.sleep(5)  # Wait for more items to load
-        except:
-            pass
-
-        # Calculate new scroll height and compare with last scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
+        return product_info
+    else:
+        # Handle failed HTTP request
+        return None
 
 
-# Initial scroll height
-last_height = driver.execute_script("return document.body.scrollHeight")
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python_script.py <query> [exact]")
+        sys.exit(1)
 
-# Scroll down to load all items
-scroll_down_and_load_more(driver, last_height)
+    query = sys.argv[1]
+    exact = False
+    if len(sys.argv) == 3:
+        exact = True
 
-# Find all article elements with class containing 'vtex-product-summary'
-articles = driver.find_elements(By.CSS_SELECTOR, 'article[class*="vtex-product-summary"]')
-
-# Print the text inside each article element
-for index, article in enumerate(articles, start=1):
-    print(article.text.strip())
-    print("-" * 50)
-
-# Close the browser
-driver.quit()
+    products = get_product_info(query, exact)
+    if products:
+        for product in products:
+            print(f"{product['name']}\n{product['price']}\n{product['url']}")
+            print("-" * 50)
+    else:
+        print("No products found.")
