@@ -39,9 +39,9 @@
                 </div>
             </div>
         }
-        <div class="mt-3 d-flex justify-content-around">
+        <div class="mt-3 d-flex justify-content-around align-items-center">
             <div class="d-flex flex-column justify-content-center">
-                <p class="text-center">Try most popular searches:</p>
+                <p class="text-center mb-3">Try most popular searches:</p>
                 <div>
                     <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'l')">
                         Apa - 1.5 l
@@ -55,9 +55,11 @@
                 </div>
             </div>
             <div class="d-flex flex-column justify-content-center">
-                <div class="d-flex">
-                    <p class="text-center">Favourites:</p>
-                    <button id="delete-button" class="btn btn-outline-danger" onclick="deleteButton(false)">Delete</button>
+                <div class="d-flex justify-content-center align-items-center mb-3">
+                    <p class="text-center mx-2 my-0">Favourites:</p>
+                    <button id="delete-button" class="btn btn-outline-danger mx-2" onclick="deleteButton(false)">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
                 </div>
                 <div id="favorites-list"></div>
             </div>
@@ -187,12 +189,12 @@
             const isDark = button.classList.contains("btn-outline-dark");
             const oldClass = isDark ? "btn-outline-dark" : "btn-outline-danger";
             const newClass = isDark ? "btn-outline-danger" : "btn-outline-dark";
-            const newText = isDark ? "Delete" : "Stop";
+            const newHtml = isDark ? "<i class=\"bi bi-trash3-fill\"></i>" : "<i class=\"bi bi-x-lg\"></i>";
 
             // Update the main button
             button.classList.remove(oldClass);
             button.classList.add(newClass);
-            button.textContent = newText;
+            button.innerHTML = newHtml;
 
 
             displayFavorites();
