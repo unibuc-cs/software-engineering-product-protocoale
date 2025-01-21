@@ -178,6 +178,8 @@ namespace MDS_PROJECT.Helpers
                 var attributes = product.Split("\n", StringSplitOptions.RemoveEmptyEntries); // [0] -> product name + others, [1] -> product price
                 var processed = ProcessName(attributes[0]);
                 p.Price = StringToDecimal(attributes[1]);
+                p.Link = attributes[2];
+                
                 p.ItemName = processed.Name;
                 p.Quantity = processed.Quantity;
                 p.MeasureUnit = processed.Unit;

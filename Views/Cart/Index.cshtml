@@ -5,7 +5,7 @@
     <h1>Shopping Cart</h1>
 
     <ul id="cartItems" class="list-group">
-        @if (ViewBag.Items != null)
+        @*if (ViewBag.Items != null)
         {
             @foreach (var item in ViewBag.Items)
             {
@@ -16,15 +16,38 @@
             }
         }
         else {
-            <p>Your Cart is empty, add some products <a href="/Product">here</a>!</p>
-        }
+        }*@
     </ul>
 
     <h2 class="mt-5">Totals</h2>
-    <p class="totals"><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour Total:</a> @ViewBag.CarrefourTotal Lei</p>
+    <p class="totals">
+        <a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour Total:</a> @ViewBag.CarrefourTotal Lei</p>
 </section>
 
 <script>
+    function displayCartItems()
+    {
+        let list = document.getElementById("cartItems");
+
+        let products = localStorage.getItem("cartItems");
+
+        if (products === null)
+        {
+            list.innerHTML = "<p>Your Cart is empty, add some products <a href="/Product">here</a>!</p>"
+            return;
+        }
+
+        products = JSON.parse(products);
+        
+        for (let product of products)
+        {
+            const item = document.createElement("li");
+            item.className = "list-group-item bg-dark text-white";
+            item.innerText = `${product.ItemName} - ${product.Quantity} ${product.MeasureUnit}, ${product.Price} lei (${product.Store})`;
+            list.appendChild(item);
+        }
+    }
+
     var itemIndex = 1;
     
     function redirectToMaps(store) {

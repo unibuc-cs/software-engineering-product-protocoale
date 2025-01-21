@@ -40,7 +40,7 @@
             </div>
         }
         <div class="mt-3 d-flex justify-content-around align-items-center">
-            <div class="d-flex flex-column justify-content-center">
+            <!-- <div class="d-flex flex-column justify-content-center">
                 <p class="text-center mb-3">Try most popular searches:</p>
                 <div>
                     <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'l')">
@@ -53,7 +53,7 @@
                         Lapte - 1 l
                     </button>
                 </div>
-            </div>
+            </div> -->
             <div class="d-flex flex-column justify-content-center">
                 <div class="d-flex justify-content-center align-items-center mb-3">
                     <p class="text-center mx-2 my-0">Favourites:</p>
@@ -81,7 +81,12 @@
                 <ul id="carrefour-results" class="product-list">
                     @foreach (var item in ViewBag.CarrefourResults)
                     {
-                        <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                        <div class="d-flex align-items-center">
+                            <li class="carrefour-item mx-2" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <button class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.ItemName, @item.Quantity, @item.MeasureUnit, @item.Price, @item.Link, 'Carrefour')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
                     }
                 </ul>
             }
@@ -94,6 +99,41 @@
    </div>
       
     <script>
+        function addToCart(itemName, quantity, measureUnit, price, link, store)
+        {
+            let products = localStorage.getItem("cartItems");
+
+            if (products === null)
+            {
+                products = [
+                    {
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link, 
+                        Store: store
+                    }
+                ]
+            }
+            else 
+            {
+                products = JSON.parse(products);
+                products.push(
+                    {
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link,
+                        Store: store
+                    }
+                );
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(products));
+        }
+
         function setQueryValue(query, quantity, unit) {
             document.getElementById('query').value = query;
             document.getElementById('quantity').value = quantity;
@@ -114,9 +154,6 @@
                 throw new Error("String format is invalid");
             }
         }
-
-
- 
 
         function deleteFromFavorites(query, quantity, unit) {
             let favorites = localStorage.getItem("favorites");
