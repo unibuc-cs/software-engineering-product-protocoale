@@ -60,16 +60,15 @@
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByName()">Sort by Name</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'carrefour')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'carrefour')">Sort by Name</button>
                 </div>
                 <ul id="carrefour-results" class="product-list">
                     @for (var i = 0; i < ViewBag.CarrefourResults.Count; i ++) 
                     {
                         var item = ViewBag.CarrefourResults[i];
-                        <div class="d-flex align-items-center">
-                            <li class="carrefour-item mx-2" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
                             <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
                                 <i class="bi bi-plus"></i>
                             </button>
@@ -80,6 +79,31 @@
             else 
             {
                 <p class="no-results">Carrefour results not found.</p>
+            }
+
+            <h2>Auchan</h2>
+            @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'auchan')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'auchan')">Sort by Name</button>
+                </div>
+                <ul id="auchan-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.AuchanResults.Count; i ++) 
+                    {
+                        var item = ViewBag.AuchanResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    }
+                </ul>
+            }
+            else 
+            {
+                <p>Auchan results not found.</p>
             }
 
         </div>
@@ -261,54 +285,56 @@
 
         var carrefourSortByPriceAsc = true;
         var carrefourSortByNameAsc = true;
-        var carrefourSortByQuantityAsc = true;
+        var auchanSortByPriceAsc = true;
+        var auchanSortByNameAsc = true;
 
-        function sortCarrefourResultsByPrice() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var priceA = getPriceValue(a.innerText);
-                var priceB = getPriceValue(b.innerText);
-                return carrefourSortByPriceAsc ? priceA - priceB : priceB - priceA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
-        }
+        function sortResults(criterium, store) {
+            var ul = document.getElementById(`${store}-results`);
+            let array = Array.from(ul.children);
 
-        function sortCarrefourResultsByName() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var nameA = a.innerText.split(",")[0].trim();
-                var nameB = b.innerText.split(",")[0].trim();
-                return carrefourSortByNameAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByNameAsc = !carrefourSortByNameAsc;
-        }
+            if (criterium === 0) // by price
+            {
+                array.sort((a, b) => {
+                    const aVal = Number(a.getAttribute("data-price"));
+                    const bVal = Number(b.getAttribute("data-price"));
 
-        function sortCarrefourResultsByQuantity() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var quantityA = getQuantityValue(a.innerText);
-                var quantityB = getQuantityValue(b.innerText);
-                return carrefourSortByQuantityAsc ? quantityA - quantityB : quantityB - quantityA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByPriceAsc ? aVal - bVal : bVal - aVal;
+                    else 
+                        return auchanSortByPriceAsc ? aVal - bVal : bVal - aVal;
+
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
+                else 
+                    auchanSortByPriceAsc = !auchanSortByPriceAsc;
+            } 
+            else if (criterium === 1) // by name
+            {
+                array.sort((a, b) => {
+                    const aVal = a.getAttribute("data-name");
+                    const bVal = b.getAttribute("data-name");
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    else
+                        return auchanSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByNameAsc = !carrefourSortByNameAsc;
+                else 
+                    auchanSortByNameAsc = !auchanSortByNameAsc;
+            } 
+
+            for (var item of array)
+            {
+                ul.appendChild(item);
             }
-            carrefourSortByQuantityAsc = !carrefourSortByQuantityAsc;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             displayFavorites();
         });
     </script>
-
-
 </section>

@@ -33,9 +33,9 @@ def get_product_info(query, exact):
             # Append product information to the list
             if exact:
                 if query.lower() in name.lower().split():
-                    product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
+                    product_info.append({'name': name, 'price': price_amount,'url':product_url})
             else:
-                product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
+                product_info.append({'name': name, 'price': price_amount,'url':product_url})
 
         return product_info
     else:
@@ -58,5 +58,5 @@ if __name__ == "__main__":
         for product in products:
             print(f"{product['name']}\n{product['price']}\n{product['url']}")
             print("-" * 50)
-    else:
-        print("No products found.")
+    # else:
+        # print("No products found.")
