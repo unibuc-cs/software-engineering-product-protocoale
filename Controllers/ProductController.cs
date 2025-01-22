@@ -45,24 +45,19 @@ namespace MDS_PROJECT.Controllers
             if (existingProducts.Any())
             {
                 ViewBag.CarrefourResults = utils.FilterItems(existingProducts, quantityNumber, unit, "carrefour");
-                ViewBag.KauflandResults = utils.FilterItems(existingProducts, quantityNumber, unit, "kaufland");
                 return View("Index");
             }
 
             // Execute the search scripts for Carrefour and Kaufland
             var carrefourTask = utils.StartSearchScript("Carrefour.py", query, exactItemName);
-            var kauflandTask = utils.StartSearchScript("Kaufland.py", query, exactItemName);
 
-            await Task.WhenAll(carrefourTask, kauflandTask);
+            await Task.WhenAll(carrefourTask);
 
             var carrefourResults = utils.ParseResults(carrefourTask.Result, "carrefour");
-            var kauflandResults = utils.ParseKauflandResults(kauflandTask.Result);
 
             ViewBag.CarrefourResults = utils.FilterItems(carrefourResults, quantityNumber, unit);
-            ViewBag.KauflandResults = utils.FilterItems(kauflandResults, quantityNumber, unit);
 
             await utils.SaveToDatabase(carrefourResults, query);
-            await utils.SaveToDatabase(kauflandResults, query);
 
             return View("Index");
 
