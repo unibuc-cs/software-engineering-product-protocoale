@@ -13,19 +13,19 @@ def get_product_info(query, exact):
         # Parse the HTML content using BeautifulSoup
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        # Find all product containers
-        product_containers = soup.find_all('li', class_='product')
+        # Find all product products
+        products = soup.find_all('li', class_='product')
 
-        # Extract product information (name and price) for each container
+        # Extract product information (name and price) for each product
         product_info = []
-        for container in product_containers:
+        for product in products:
             # Extract product id
-            product_id = container['data-product-id']
+            product_id = product['data-product-id']
 
             # Extract product name
-            name_element = container.find('div', class_='productItem-name')
+            name_element = product.find('div', class_='productItem-name')
             name = name_element.find('a').text.strip() if name_element else 'N/A'
-            product_url=container.find('a', class_='productItem-image').get('href')
+            product_url=product.find('a', class_='productItem-image').get('href')
 
             # Find the corresponding price element
             price_element = soup.find('div', id=f"product-price-{product_id}")

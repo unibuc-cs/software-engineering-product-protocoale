@@ -1,71 +1,68 @@
 import sys
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import requests
 
 # Check if the query is provided as a command-line argument
-if len(sys.argv) < 2:
-    print("Usage: python_script.py <query>")
-    sys.exit(1)
+def get_product_info(query, exact):
+    url = f"https://www.mega-image.ro/search?q={query}%3Arelevance&sort=relevance"
 
-# Extract the query from the command-line argument
-query = "+".join(sys.argv[1:])
+    # Send a GET request to the URL and retrieve the HTML content
+    options=Options()
+    options.add_argument('--headless')
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()),options=options)
 
-# Start a new instance of Chrome
-driver = webdriver.Chrome()
+    response = requests.get(url)
+    driver.get(url)
 
-# Load the webpage with the provided query
-driver.get(f"https://www.mega-image.ro/search?q={query.replace(' ', '+')}%3Arelevance&sort=relevance")
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        time.sleep(3)
+        button= driver.find_element(By.CSS_SELECTOR, "button[data-testid='cookie-popup-accept']")
+        button.click()
+        # Find all product products
 
-# Wait for the page to load and display product summaries
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'article[class*="vtex-product-summary"]')))
-except Exception as e:
-    print("Error waiting for product summary articles:", e)
+        products_name = [product.text for product in driver.find_elements(By.CSS_SELECTOR, "span[data-testid='product-name']" )]
+        products_price=[product.find_element(By.CSS_SELECTOR,"div[class='sc-dqia0p-9 jWCjCP']").text+','+product.find_element(By.CSS_SELECTOR,"sup[class='sc-dqia0p-10 cNzomO']").text
+                        for product in driver.find_elements(By.CSS_SELECTOR, "div[data-testid='product-block-price']")]
+        products_link=[product.get_attribute('href') for product in driver.find_elements(By.CSS_SELECTOR, "a[data-testid='product-block-name-link']" )]
+        products=zip(products_name,products_price, products_link)
 
+        # Extract product information (name and price) for each product
+        product_info = []
+        for name, price_amount, product_url  in products:
 
-# Function to scroll down and load more items
-def scroll_down_and_load_more(driver):
-    last_height = driver.execute_script("return document.body.scrollHeight")
+            # Append product information to the list
+            if exact:
+                if query.lower() in name.lower().split():
+                    product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
+            else:
+                product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
 
-    while True:
-        # Scroll down to the bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-        # Wait for new elements to load
-        time.sleep(5)
-
-        # Calculate new scroll height and compare with last scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
-
-
-# Scroll down to load all items
-scroll_down_and_load_more(driver)
-
-# Find all article elements with class containing 'vtex-product-summary'
-articles = driver.find_elements(By.CSS_SELECTOR, 'article[class*="vtex-product-summary"]')
+        return product_info
+    else:
+        # Handle failed HTTP request
+        return None
 
 # Print the text inside each article element along with its price
-for index, article in enumerate(articles, start=1):
-    print(f"Item {index}:")
-    print(article.text.strip())
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python_script.py <query> [exact]")
+        sys.exit(1)
 
-    # Find the price within the article
-    try:
-        integer_part = article.find_element(By.CSS_SELECTOR, 'span[class*="sc-bw95zp-9"]').text
-        fractional_part = article.find_element(By.CSS_SELECTOR, 'sup[class*="sc-bw95zp-10"]').text
-        price = f"{integer_part}.{fractional_part}"
-        print(f"Price: {price}")
-    except:
-        print("Price not found")
+    query = sys.argv[1]
+    exact = False
+    if len(sys.argv) == 3:
+        exact = True
 
-    print("-" * 50)
-
-# Close the browser
-driver.quit()
+    products = get_product_info(query, exact)
+    if products:
+        for product in products:
+            print(f"{product['name']}\n{product['price']}\n{product['product_url']}")
+            print("-" * 50)
+    else:
+        print("No products found.")

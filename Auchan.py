@@ -56,7 +56,7 @@ if __name__ == "__main__":
     products = get_product_info(query, exact)
     if products:
         for product in products:
-            print(f"{product['name']}\n{product['price']}\n{product['url']}")
+            print(f"{product['name']}\n{product['price']}\n{product['product_url']}")
             print("-" * 50)
     else:
         print("No products found.")
