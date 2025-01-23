@@ -41,20 +41,6 @@
         }
         <div class="mt-3 d-flex justify-content-around align-items-center">
             <div class="d-flex flex-column justify-content-center">
-                <p class="text-center mb-3">Try most popular searches:</p>
-                <div>
-                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'l')">
-                        Apa - 1.5 l
-                    </button>
-                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Fanina', '1', 'kg')">
-                        Faina - 1 kg
-                    </button>
-                    <button type="button" class="btn btn-outline-dark rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '1', 'l')">
-                        Lapte - 1 l
-                    </button>
-                </div>
-            </div>
-            <div class="d-flex flex-column justify-content-center">
                 <div class="d-flex justify-content-center align-items-center mb-3">
                     <p class="text-center mx-2 my-0">Favourites:</p>
                     <button id="delete-button" class="btn btn-outline-danger mx-2" onclick="deleteButton(false)">
@@ -74,14 +60,19 @@
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByName()">Sort by Name</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'carrefour')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'carrefour')">Sort by Name</button>
                 </div>
                 <ul id="carrefour-results" class="product-list">
-                    @foreach (var item in ViewBag.CarrefourResults)
+                    @for (var i = 0; i < ViewBag.CarrefourResults.Count; i ++) 
                     {
-                        <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                        var item = ViewBag.CarrefourResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
                     }
                 </ul>
             }
@@ -90,10 +81,77 @@
                 <p class="no-results">Carrefour results not found.</p>
             }
 
+            <h2>Auchan</h2>
+            @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'auchan')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'auchan')">Sort by Name</button>
+                </div>
+                <ul id="auchan-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.AuchanResults.Count; i ++) 
+                    {
+                        var item = ViewBag.AuchanResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    }
+                </ul>
+            }
+            else 
+            {
+                <p>Auchan results not found.</p>
+            }
+
         </div>
    </div>
       
     <script>
+        function addToCart(id, itemName, quantity, measureUnit, price, link, store)
+        {
+            let products = localStorage.getItem("cartItems");
+
+            if (products === null)
+            {
+                products = [
+                    {
+                        Id: id,
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link, 
+                        Store: store
+                    }
+                ]
+            }
+            else 
+            {
+                products = JSON.parse(products);
+                products.push(
+                    {
+                        Id: id,
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link,
+                        Store: store
+                    }
+                );
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(products));
+
+            const added = document.createElement("i");
+            added.className = "bi bi-check-lg";
+            const removed = document.getElementById(`result-${id}`);
+            removed.replaceWith(added);
+        }
+
         function setQueryValue(query, quantity, unit) {
             document.getElementById('query').value = query;
             document.getElementById('quantity').value = quantity;
@@ -114,9 +172,6 @@
                 throw new Error("String format is invalid");
             }
         }
-
-
- 
 
         function deleteFromFavorites(query, quantity, unit) {
             let favorites = localStorage.getItem("favorites");
@@ -230,54 +285,56 @@
 
         var carrefourSortByPriceAsc = true;
         var carrefourSortByNameAsc = true;
-        var carrefourSortByQuantityAsc = true;
+        var auchanSortByPriceAsc = true;
+        var auchanSortByNameAsc = true;
 
-        function sortCarrefourResultsByPrice() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var priceA = getPriceValue(a.innerText);
-                var priceB = getPriceValue(b.innerText);
-                return carrefourSortByPriceAsc ? priceA - priceB : priceB - priceA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
-        }
+        function sortResults(criterium, store) {
+            var ul = document.getElementById(`${store}-results`);
+            let array = Array.from(ul.children);
 
-        function sortCarrefourResultsByName() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var nameA = a.innerText.split(",")[0].trim();
-                var nameB = b.innerText.split(",")[0].trim();
-                return carrefourSortByNameAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByNameAsc = !carrefourSortByNameAsc;
-        }
+            if (criterium === 0) // by price
+            {
+                array.sort((a, b) => {
+                    const aVal = Number(a.getAttribute("data-price"));
+                    const bVal = Number(b.getAttribute("data-price"));
 
-        function sortCarrefourResultsByQuantity() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var quantityA = getQuantityValue(a.innerText);
-                var quantityB = getQuantityValue(b.innerText);
-                return carrefourSortByQuantityAsc ? quantityA - quantityB : quantityB - quantityA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByPriceAsc ? aVal - bVal : bVal - aVal;
+                    else 
+                        return auchanSortByPriceAsc ? aVal - bVal : bVal - aVal;
+
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
+                else 
+                    auchanSortByPriceAsc = !auchanSortByPriceAsc;
+            } 
+            else if (criterium === 1) // by name
+            {
+                array.sort((a, b) => {
+                    const aVal = a.getAttribute("data-name");
+                    const bVal = b.getAttribute("data-name");
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    else
+                        return auchanSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByNameAsc = !carrefourSortByNameAsc;
+                else 
+                    auchanSortByNameAsc = !auchanSortByNameAsc;
+            } 
+
+            for (var item of array)
+            {
+                ul.appendChild(item);
             }
-            carrefourSortByQuantityAsc = !carrefourSortByQuantityAsc;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             displayFavorites();
         });
     </script>
-
-
 </section>

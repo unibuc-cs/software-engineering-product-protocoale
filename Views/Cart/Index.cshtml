@@ -5,26 +5,111 @@
     <h1>Shopping Cart</h1>
 
     <ul id="cartItems" class="list-group">
-        @if (ViewBag.Items != null)
-        {
-            @foreach (var item in ViewBag.Items)
-            {
-                <li class="list-group-item bg-dark text-white">
-                    @item.ItemName - Quantity: @item.Quantity @item.MeasureUnit - Multiplier: @item.Multiplier
-                    <p>Carrefour: @item.CarrefourMessage</p>
-                </li>
-            }
-        }
-        else {
-            <p>Your Cart is empty, add some products <a href="/Product">here</a>!</p>
-        }
     </ul>
 
     <h2 class="mt-5">Totals</h2>
-    <p class="totals"><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour Total:</a> @ViewBag.CarrefourTotal Lei</p>
+    <div id="totals">
+    </div>
 </section>
 
 <script>
+    function displayPrices()
+    {
+        let totals = document.getElementById("totals");
+        totals.innerHTML = "";
+
+        let cartItems = JSON.parse(localStorage.getItem("cartItems"));
+        
+        if (cartItems === null || cartItems.length == 0)
+        {
+            totals.innerHTML = "<p>No totals.</p>";
+            return;
+        }
+
+        prices = new Map();
+
+        for (var item of cartItems)
+        {
+            let key = item.Store.toLowerCase();
+
+            if (prices.has(key))
+            {
+                prices.set(key, prices.get(key) + Number(item.Price));
+            }
+            else 
+            {
+                prices.set(key, Number(item.Price));
+            }
+        }
+
+        for (const [key, value] of prices)
+        {
+            const p = document.createElement("p");
+            p.innerText = `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.toFixed(2)} lei`;
+            totals.appendChild(p);
+        }
+    }
+
+    function displayCartItems()
+    {
+        let list = document.getElementById("cartItems");
+        list.innerHTML = "";
+
+        let products = localStorage.getItem("cartItems");
+        products = JSON.parse(products);
+
+        if (products === null || products.length == 0)
+        {
+            list.innerHTML = "<p>Your Cart is empty, add some products <a href=\"/Product\">here</a>!</p>"
+            displayPrices();
+            return;
+        }
+
+        
+        for (let product of products)
+        {
+            const item = document.createElement("li");
+            item.className = "list-group-item mx-2";
+            item.id = `cartItem-${product.Id}`;
+            item.innerText = `${product.ItemName} - ${product.Quantity} ${product.MeasureUnit}, ${product.Price} lei (${product.Store})`;
+            
+            const button = document.createElement("button");
+            button.className = "btn btn-outline-danger btn-sm mx-2";
+            button.onclick = () => deleteCartItem(product.Id);
+            button.innerHTML = "<i class=\"bi bi-x\"></i>";
+
+            const div = document.createElement("div");
+            div.className = "d-flex align-items-center mb-1";
+            div.appendChild(item);
+            div.appendChild(button);
+            list.appendChild(div);
+        }
+        displayPrices();
+    }
+
+    function deleteCartItem(id)
+    {
+        let products = localStorage.getItem("cartItems");
+
+        if (products === null)
+        {
+            return;
+        }
+
+        products = JSON.parse(products);
+
+        const newProducts = products.filter(obj => obj.Id !== id);
+
+        localStorage.setItem("cartItems", JSON.stringify(newProducts));
+        displayCartItems();
+        // displayPrices();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        displayCartItems();
+        // displayPrices();
+    });
+
     var itemIndex = 1;
     
     function redirectToMaps(store) {

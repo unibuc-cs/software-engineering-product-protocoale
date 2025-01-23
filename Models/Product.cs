@@ -19,6 +19,7 @@ namespace MDS_PROJECT.Models
 
         public string Store { get; set; }
         public string Searched { get; set; }
+        public string Link {get; set; }
 
         public Product() { }
         public Product(Product product)

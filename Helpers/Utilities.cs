@@ -148,21 +148,21 @@ namespace MDS_PROJECT.Helpers
             }
         } // StartSearchScript
 
-        public List<Product> ParseResults(string results, string store)
-        {
-            switch (store.ToLower())
-            {
-                case "carrefour":
-                    return ParseCarrefourResults(results);
-                case "kaufland":
-                    return ParseKauflandResults(results); // this is no mistake, for now the two will parse the same,
-                                                          // maybe in the future will not, gonna leave it like this
-                default:
-                    return new List<Product>();
-            }
-        }
+        // public List<Product> ParseResults(string results, string store)
+        // {
+        //     switch (store.ToLower())
+        //     {
+        //         case "carrefour":
+        //             return ParseCarrefourResults(results);
+        //         case "kaufland":
+        //             return ParseKauflandResults(results); // this is no mistake, for now the two will parse the same,
+        //                                                   // maybe in the future will not, gonna leave it like this
+        //         default:
+        //             return new List<Product>();
+        //     }
+        // }
 
-        public List<Product> ParseCarrefourResults(string results)
+        public List<Product> ParseResults(string results, string store)
         {
             results = results.Replace("\r", "");
             string delimiter = new string('-', 50);
@@ -178,11 +178,13 @@ namespace MDS_PROJECT.Helpers
                 var attributes = product.Split("\n", StringSplitOptions.RemoveEmptyEntries); // [0] -> product name + others, [1] -> product price
                 var processed = ProcessName(attributes[0]);
                 p.Price = StringToDecimal(attributes[1]);
+                p.Link = attributes[2];
+                
                 p.ItemName = processed.Name;
                 p.Quantity = processed.Quantity;
                 p.MeasureUnit = processed.Unit;
                 p.Currency = "lei";
-                p.Store = "carrefour";
+                p.Store = store;
 
                 result.Add(p);
             }
