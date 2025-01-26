@@ -106,6 +106,31 @@
                 <p>Auchan results not found.</p>
             }
 
+            <h2>Mega Image</h2>
+            @if (ViewBag.MegaResults is List<MDS_PROJECT.Models.Product> megaResults && megaResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'mega')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'mega')">Sort by Name</button>
+                </div>
+                <ul id="mega-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.MegaResults.Count; i ++) 
+                    {
+                        var item = ViewBag.MegaResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    }
+                </ul>
+            }
+            else 
+            {
+                <p>Mega results not found.</p>
+            }
+
         </div>
    </div>
       
@@ -216,7 +241,7 @@
             }
 
             let favorites = localStorage.getItem("favorites");
-            if (favorites === undefined)
+            if (favorites === null)
             {
                 favorites = [
                     {Query: query, Quantity: quantity, Unit: unit}
