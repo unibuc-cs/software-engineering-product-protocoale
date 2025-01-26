@@ -128,7 +128,11 @@
                     {
                         var item = ViewBag.MegaResults[i];
                         <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
-                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <li class="mx-2">
+                                <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                            @item.ItemName
+                                </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                            </li>
                             <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
                                 <i class="bi bi-plus"></i>
                             </button>
