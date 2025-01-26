@@ -64,5 +64,5 @@ if __name__ == "__main__":
         for product in products:
             print(f"{product['name']}\n{product['price']}\n{product['product_url']}")
             print("-" * 50)
-    else:
-        print("No products found.")
+        # else:
+        #     print("No products found.")

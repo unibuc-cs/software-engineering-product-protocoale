@@ -24,26 +24,26 @@ async
 
 <!-- Map section -->
 <section id="map-section" class="py-5">
-  <div class="container d-flex flex-column justify-content-center vh-100">
-    <div id="map" class="bg-dark h-80"></div>
-    <div>
-        <label for="mode">Choose mode of transportation:</label>
-        <select id="mode">
-            <option value="DRIVING">Driving</option>
-            <option value="WALKING">Walking</option>
-            <option value="BICYCLING">Bicycling</option>
-            <option value="TRANSIT">Transit</option>
-        </select>
-        <div id="info"></div>
-    </div>  
-  </div>
+    <div class="container d-flex flex-column justify-content-center vh-100">
+        <div id="map" class="bg-dark h-80"></div>
+        <div>
+            <label for="mode">Choose mode of transportation:</label>
+            <select id="mode">
+                <option value="DRIVING">Driving</option>
+                <option value="WALKING">Walking</option>
+                <option value="BICYCLING">Bicycling</option>
+                <option value="TRANSIT">Transit</option>
+            </select>
+            <div id="info"></div>
+        </div>  
+    </div>
+    <div class="d-flex justify-content-around"> <!-- Some basic style for layout -->
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Carrefour')">Find Carrefour Stores</a>
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Auchan')">Find Auchan Stores</a> 
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Mega')">Find Mega Stores</a>
+    </div>
 </section>
 
-<div style="display:flex; justify-content:space-around"> <!-- Some basic style for layout -->
-    <a href="/#map-section" onclick="initMap('Carrefour')">Find Carrefour Stores</a>
-    <a href="/#map-section" onclick="initMap('Auchan')">Find Auchan Stores</a> 
-    <a href="/#map-section" onclick="initMap('Mega')">Find Mega Stores</a>
-</div>
 
 <!-- Featured Products -->
 <section id="featured-products" class="py-5 bg-light">
@@ -90,7 +90,9 @@ async
     let directionsRenderer;
     let markersArray = [];
 
-    window.initMap = function (store="Carrefour") {
+    window.initMap = function (store="Carrefour", event) {
+        if (event)
+            event.preventDefault();
         url = getParameterByName("store");
         if(url != null) {
             store = url;
