@@ -56,7 +56,7 @@
     <!-- Results Section -->
     <div class="results-container mt-5">
         <div class="results">
-            <h2>Carrefour</h2>
+            <a href="/?store=Carrefour#map-section">Carrefour</a>
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
@@ -81,7 +81,7 @@
                 <p class="no-results">Carrefour results not found.</p>
             }
 
-            <h2>Auchan</h2>
+            <a href="/?store=Auchan#map-section">Auchan</a>
             @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
             {
                 <div class="mb-3">

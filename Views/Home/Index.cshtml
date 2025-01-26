@@ -39,6 +39,11 @@ async
   </div>
 </section>
 
+<div style="display:flex; justify-content:space-around"> <!-- Some basic style for layout -->
+    <a href="/#map-section" onclick="initMap('Carrefour')">Find Carrefour Stores</a>
+    <a href="/#map-section" onclick="initMap('Auchan')">Find Auchan Stores</a> 
+    <a href="/#map-section" onclick="initMap('Mega')">Find Mega Stores</a>
+</div>
 
 <!-- Featured Products -->
 <section id="featured-products" class="py-5 bg-light">
@@ -50,10 +55,10 @@ async
           <img src="~/img/carrefour-logo.png" class="card-img-top" alt="Carrefour">
           <div class="card-body text-center">
             <h5 class="card-title">Carrefour</h5>
-            <!-- <a href="#map-section" onclick="initMap('Carrefour')">blabla</a> -->
           </div>
         </div>
       </div>
+      </a>
       <div class="col-md-4">
         <div class="card h-100">
           <div class="h-100 d-flex align-items-center">
@@ -86,6 +91,10 @@ async
     let markersArray = [];
 
     window.initMap = function (store="Carrefour") {
+        url = getParameterByName("store");
+        if(url != null) {
+            store = url;
+        }
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 15,
             mapTypeControl: false
@@ -125,15 +134,15 @@ async
         });
     }
 
-    // function getParameterByName(name) {
-    //     const url = window.location.href;
-    //     name = name.replace(/[\[\]]/g, '\\$&');
-    //     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
-    //     const results = regex.exec(url);
-    //     if (!results) return null;
-    //     if (!results[2]) return '';
-    //     return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    // }
+    function getParameterByName(name) {
+         const url = window.location.href;
+         name = name.replace(/[\[\]]/g, '\\$&');
+         const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+         const results = regex.exec(url);
+         if (!results) return null;
+         if (!results[2]) return '';
+         return decodeURIComponent(results[2].replace(/\+/g, ' '));
+     }
 
     function geocodeAddress(address, store) {
         const geocoder = new google.maps.Geocoder();
