@@ -56,7 +56,7 @@
     <!-- Results Section -->
     <div class="results-container mt-5">
         <div class="results">
-            <a href="/?store=Carrefour#map-section">Carrefour</a>
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Carrefour#map-section">Carrefour</a>
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
@@ -81,7 +81,7 @@
                 <p class="no-results">Carrefour results not found.</p>
             }
 
-            <a href="/?store=Auchan#map-section">Auchan</a>
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Auchan#map-section">Auchan</a>
             @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
             {
                 <div class="mb-3">
@@ -106,7 +106,8 @@
                 <p>Auchan results not found.</p>
             }
 
-            <h2>Mega Image</h2>
+            <!-- <h2>Mega Image</h2> -->
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=megaimage#map-section">Mega Image</a>
             @if (ViewBag.MegaResults is List<MDS_PROJECT.Models.Product> megaResults && megaResults.Any())
             {
                 <div class="mb-3">
