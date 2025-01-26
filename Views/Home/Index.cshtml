@@ -3,9 +3,9 @@
 }
 
 <script
-  src="https://maps.googleapis.com/maps/api/js?key=@ViewBag.MapsKey"
-  async 
-  defer
+  src="https://maps.googleapis.com/maps/api/js?key=@ViewBag.MapsKey&libraries=places,geometry&callback=initMap" 
+defer
+async
 >
 </script>
 
@@ -50,6 +50,7 @@
           <img src="~/img/carrefour-logo.png" class="card-img-top" alt="Carrefour">
           <div class="card-body text-center">
             <h5 class="card-title">Carrefour</h5>
+            <!-- <a href="#map-section" onclick="initMap('Carrefour')">blabla</a> -->
           </div>
         </div>
       </div>
@@ -84,7 +85,7 @@
     let directionsRenderer;
     let markersArray = [];
 
-    function initMap() {
+    window.initMap = function (store="Carrefour") {
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 15,
             mapTypeControl: false
@@ -94,7 +95,6 @@
         directionsRenderer = new google.maps.DirectionsRenderer();
         directionsRenderer.setMap(map);
 
-        const store = getParameterByName('store');
         if (!store) {
             console.error('Store parameter is missing in the URL');
             return;
@@ -125,15 +125,15 @@
         });
     }
 
-    function getParameterByName(name) {
-        const url = window.location.href;
-        name = name.replace(/[\[\]]/g, '\\$&');
-        const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
-        const results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
+    // function getParameterByName(name) {
+    //     const url = window.location.href;
+    //     name = name.replace(/[\[\]]/g, '\\$&');
+    //     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+    //     const results = regex.exec(url);
+    //     if (!results) return null;
+    //     if (!results[2]) return '';
+    //     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    // }
 
     function geocodeAddress(address, store) {
         const geocoder = new google.maps.Geocoder();
