@@ -56,7 +56,7 @@
     <!-- Results Section -->
     <div class="results-container mt-5">
         <div class="results">
-            <h2>Carrefour</h2>
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Carrefour#map-section">Carrefour</a>
             @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
             {
                 <div class="mb-3">
@@ -64,36 +64,75 @@
                     <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'carrefour')">Sort by Name</button>
                 </div>
                 <ul id="carrefour-results" class="product-list">
-                    @for (var i = 0; i < ViewBag.CarrefourResults.Count; i ++) 
+                    @for (var i = 0; i < ViewBag.CarrefourResults.Count; i++)
                     {
                         var item = ViewBag.CarrefourResults[i];
                         <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
-                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
-                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
+                        <li class="mx-2 my-1">
+                            <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                    @item.ItemName
+                            </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                        </li>
+                        <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                </div>
                     }
-                </ul>
+            </ul>
             }
-            else 
+            else
             {
-                <p class="no-results">Carrefour results not found.</p>
+            <p class="no-results">Carrefour results not found.</p>
             }
 
-            <h2>Auchan</h2>
+        <!-- Auchan Results -->
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Auchan#map-section">Auchan</a>
             @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
             {
-                <div class="mb-3">
-                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'auchan')">Sort by Price</button>
-                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'auchan')">Sort by Name</button>
-                </div>
-                <ul id="auchan-results" class="product-list">
-                    @for (var i = 0; i < ViewBag.AuchanResults.Count; i ++) 
+            <div class="mb-3">
+                <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'auchan')">Sort by Price</button>
+                <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'auchan')">Sort by Name</button>
+            </div>
+            <ul id="auchan-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.AuchanResults.Count; i++)
                     {
                         var item = ViewBag.AuchanResults[i];
+                    <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                    <li class="mx-2 my-1">
+                        <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                    @item.ItemName
+                        </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                    </li>
+                    <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                        <i class="bi bi-plus"></i>
+                    </button>
+            </div>
+                    }
+        </ul>
+            }
+            else
+            {
+        <p>Auchan results not found.</p>
+            }
+
+            <!-- <h2>Mega Image</h2> -->
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=megaimage#map-section">Mega Image</a>
+            @if (ViewBag.MegaResults is List<MDS_PROJECT.Models.Product> megaResults && megaResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'mega')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'mega')">Sort by Name</button>
+                </div>
+                <ul id="mega-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.MegaResults.Count; i ++) 
+                    {
+                        var item = ViewBag.MegaResults[i];
                         <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
-                            <li class="mx-2">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
+                            <li class="mx-2">
+                                <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                            @item.ItemName
+                                </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                            </li>
                             <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
                                 <i class="bi bi-plus"></i>
                             </button>
@@ -103,7 +142,7 @@
             }
             else 
             {
-                <p>Auchan results not found.</p>
+                <p>Mega results not found.</p>
             }
 
         </div>
@@ -216,7 +255,7 @@
             }
 
             let favorites = localStorage.getItem("favorites");
-            if (favorites === undefined)
+            if (favorites === null)
             {
                 favorites = [
                     {Query: query, Quantity: quantity, Unit: unit}

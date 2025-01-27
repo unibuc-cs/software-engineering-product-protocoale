@@ -138,29 +138,15 @@ namespace MDS_PROJECT.Helpers
 
                     await process.WaitForExitAsync();
 
-                    if (process.ExitCode != 0)
-                    {
-                        throw new Exception($"Python script error: {error}");
-                    }
+                    // if (process.ExitCode != 0)
+                    // {
+                    //     throw new Exception($"Python script error: {error}");
+                    // }
 
                     return result;
                 }
             }
         } // StartSearchScript
-
-        // public List<Product> ParseResults(string results, string store)
-        // {
-        //     switch (store.ToLower())
-        //     {
-        //         case "carrefour":
-        //             return ParseCarrefourResults(results);
-        //         case "kaufland":
-        //             return ParseKauflandResults(results); // this is no mistake, for now the two will parse the same,
-        //                                                   // maybe in the future will not, gonna leave it like this
-        //         default:
-        //             return new List<Product>();
-        //     }
-        // }
 
         public List<Product> ParseResults(string results, string store)
         {
@@ -228,11 +214,5 @@ namespace MDS_PROJECT.Helpers
             
             return (Quantity: quantity, Unit: unit);
         }   
-
-        public List<Product> ParseKauflandResults(string results)
-        {
-            // TODO
-            return new List<Product>();
-        }
     }
 }

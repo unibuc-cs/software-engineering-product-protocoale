@@ -46,23 +46,28 @@ namespace MDS_PROJECT.Controllers
             {
                 ViewBag.CarrefourResults = utils.FilterItems(existingProducts, quantityNumber, unit, "carrefour");
                 ViewBag.AuchanResults = utils.FilterItems(existingProducts, quantityNumber, unit, "auchan");
+                ViewBag.MegaResults = utils.FilterItems(existingProducts, quantityNumber, unit, "mega");
                 return View("Index");
             }
 
             // Execute the search scripts for Carrefour and Kaufland
             var carrefourTask = utils.StartSearchScript("Carrefour.py", query, exactItemName);
             var auchanTask = utils.StartSearchScript("Auchan.py", query, exactItemName);
+            var megaTask = utils.StartSearchScript("Mega.py", query, exactItemName);
 
             await Task.WhenAll(carrefourTask, auchanTask);
 
             var carrefourResults = utils.ParseResults(carrefourTask.Result, "carrefour");
             var auchanResults = utils.ParseResults(auchanTask.Result, "auchan");
+            var megaResults = utils.ParseResults(megaTask.Result, "mega");
 
             ViewBag.CarrefourResults = utils.FilterItems(carrefourResults, quantityNumber, unit);
             ViewBag.AuchanResults = utils.FilterItems(auchanResults, quantityNumber, unit);
+            ViewBag.MegaResults = utils.FilterItems(megaResults, quantityNumber, unit);
 
             await utils.SaveToDatabase(carrefourResults, query);
             await utils.SaveToDatabase(auchanResults, query);
+            await utils.SaveToDatabase(megaResults, query);
 
             return View("Index");
 
@@ -80,48 +85,5 @@ namespace MDS_PROJECT.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-
-        // Add a new favorite
-    //     [HttpPost]
-    //     public async Task<IActionResult> AddFavorite([FromBody] FavoriteProduct favorite)
-    //     {
-    //         if (string.IsNullOrWhiteSpace(favorite.Name) || string.IsNullOrWhiteSpace(favorite.Quantity) || string.IsNullOrWhiteSpace(favorite.Unit))
-    //         {
-    //             Console.WriteLine($"Name: {favorite.Name}, Quantity: {favorite.Quantity}, Unit: {favorite.Unit}");
-    //             return BadRequest("All fields are required.");
-    //         }
-
-    //         favorite.AddedDate = DateTime.Now; // Set the added date to now
-
-    //         // Add to the database
-    //         db.FavoriteItems.Add(favorite);
-    //         await db.SaveChangesAsync();
-
-    //         return Ok(favorite); // Return the added favorite item as a response
-    //     }
-
-    //     // Get all favorites
-    //     [HttpGet]
-    //     public async Task<IActionResult> GetFavorites()
-    //     {
-    //         var favorites = await db.FavoriteItems.ToListAsync();
-    //         return Json(favorites); // Return the list of favorite items as JSON
-    //     }
-
-    //     // Optionally: Delete a favorite
-    //     [HttpPost]
-    //     public async Task<IActionResult> DeleteFavorite(int id)
-    //     {
-    //         var favorite = await db.FavoriteItems.FindAsync(id);
-    //         if (favorite == null)
-    //         {
-    //             return NotFound();
-    //         }
-
-    //         db.FavoriteItems.Remove(favorite);
-    //         await db.SaveChangesAsync();
-
-    //         return Ok();
-    //     }
     }
 }
