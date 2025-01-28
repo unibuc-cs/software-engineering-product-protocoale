@@ -1,361 +1,379 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-OERcA2mA7U6Tz8oWbklKepL0LGV6MyCAp6xQmKQ4iNuORm1gYkPi7dBIYlGq2D3T" crossorigin="anonymous">
-    <style>
-        body {
-            background-color: #333;
-            color: white;
-        }
+@{
+    ViewBag.Title = "Search";
+}
 
-        .form-label {
-            margin-top: 10px;
-        }
+<section class="bg-light d-flex justify-content-evenly align-items-center flex-grow-1">
+    <div class="w-50">
+        @using (Html.BeginForm("Search", "Product", FormMethod.Post, new { @class = "form-control bg-light" })) 
+        {
 
-        .cart-item {
-            border: 1px solid #555;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        h1, h2 {
-            color: white;
-        }
-
-        .totals a {
-            color: lightgreen;
-            text-decoration: none;
-        }
-
-            .totals a:hover {
-                text-decoration: underline;
-            }
-    button.btn-outline-light {
-        border: 2px solid #f8f9fa;
-        background-color: transparent;
-        color: #f8f9fa;
-        font-size: 1rem;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    button.btn-outline-light:hover {
-        background-color: #f8f9fa;
-        color: #333;
-        border-color: #f8f9fa;
-    }
-
-    div > button {
-        margin-top: 10px;
-    }
-
-    </style>
-</head>
-<body>
-    <!-- HTML Form -->
-    <div class="container mt-4">
-        <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3">
-            <div class="col-auto">
-                <input type="text" name="query" class="form-control" placeholder="Caută un produs...">
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("query", "Search Product", new { @class = "form-label" })
+                @Html.TextBox("query", null, new { @class = "form-control", id = "query", placeholder = "Product name..." })
             </div>
-            <div class="col-auto">
-                <input type="text" name="quantity" class="form-control" placeholder="Enter quantity (e.g., 1.5 or 1,5)">
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("quantity", "Quantity", new { @class = "form-label" })
+                @Html.TextBox("quantity", null, new { @class = "form-control", id = "quantity", placeholder = "Enter quantity (e.g., 1.5 or 1,5)" })
             </div>
-            <div class="col-auto">
-                <!-- <label for="items[0].MeasureUnit" class="form-label">MeasureUnit:</label> -->
-                <select name="unit" class="form-select" required>
-                    <option value="l">liter</option>
-                    <option value="ml">ml</option>
-                    <option value="piece">piece</option>
-                    <option value="g">gram</option>
-                    <option value="kg">kg</option>
-                </select>
+            <div class="col-auto mx-5 my-2">
+                @Html.Label("unit", "Unit", new { @class = "form-label" })
+                @Html.DropDownList("unit", new SelectList(new[]
+                    {
+                        new { Value = "l", Text = "L" },
+                        new { Value = "ml", Text = "mL" },
+                        new { Value = "piece", Text = "piece" },
+                        new { Value = "g", Text = "g" },
+                        new { Value = "kg", Text = "kg" }
+                    }, "Value", "Text"), "Select Unit", new { @class = "form-select", id = "unit", required = "required" })
             </div>
-            <div class="col-auto">
+            <div class="col-auto mx-5 my-4">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="exactItemName" value="True">
-                    <label class="form-check-label" for="exactItemName">Exact Item Name</label>
+                    @Html.Label("exactItemName", "Exact Item Name", new { @class = "form-check-label" })
+                    @Html.CheckBox("exactItemName", new { @class = "form-check-input", id = "exactItemName" })
                 </div>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary mb-3">Caută</button>
+            <div class="col-auto mx-5 my-2">
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-primary mx-2">Search</button>
+                    <button type="button" class="btn btn-success mx-2" onclick="addToFavorites()">Save to Favorites</button>
+                </div>
             </div>
-        </form>
+        }
+        <div class="mt-3 d-flex justify-content-around align-items-center">
+            <div class="d-flex flex-column justify-content-center">
+                <div class="d-flex justify-content-center align-items-center mb-3">
+                    <p class="text-center mx-2 my-0">Favourites:</p>
+                    <button id="delete-button" class="btn btn-outline-danger mx-2" onclick="deleteButton(false)">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </div>
+                <div id="favorites-list"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-container mt-5">
+        <div class="results">
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Carrefour#map-section">Carrefour</a>
+            @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'carrefour')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'carrefour')">Sort by Name</button>
+                </div>
+                <ul id="carrefour-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.CarrefourResults.Count; i++)
+                    {
+                        var item = ViewBag.CarrefourResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                        <li class="mx-2 my-1">
+                            <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                    @item.ItemName
+                            </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                        </li>
+                        <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                </div>
+                    }
+            </ul>
+            }
+            else
+            {
+            <p class="no-results">Carrefour results not found.</p>
+            }
+
+        <!-- Auchan Results -->
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=Auchan#map-section">Auchan</a>
+            @if (ViewBag.AuchanResults is List<MDS_PROJECT.Models.Product> auchanResults && auchanResults.Any())
+            {
+            <div class="mb-3">
+                <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'auchan')">Sort by Price</button>
+                <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'auchan')">Sort by Name</button>
+            </div>
+            <ul id="auchan-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.AuchanResults.Count; i++)
+                    {
+                        var item = ViewBag.AuchanResults[i];
+                    <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                    <li class="mx-2 my-1">
+                        <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                    @item.ItemName
+                        </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                    </li>
+                    <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                        <i class="bi bi-plus"></i>
+                    </button>
+            </div>
+                    }
+        </ul>
+            }
+            else
+            {
+        <p>Auchan results not found.</p>
+            }
+
+            <!-- <h2>Mega Image</h2> -->
+            <a class="fs-4 link-offset-2 link-underline link-underline-opacity-0 link-underline-opacity-50-hover link-opacity-50-hover" href="/?store=megaimage#map-section">Mega Image</a>
+            @if (ViewBag.MegaResults is List<MDS_PROJECT.Models.Product> megaResults && megaResults.Any())
+            {
+                <div class="mb-3">
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(0, 'mega')">Sort by Price</button>
+                    <button class="btn btn-secondary btn-sm" onclick="sortResults(1, 'mega')">Sort by Name</button>
+                </div>
+                <ul id="mega-results" class="product-list">
+                    @for (var i = 0; i < ViewBag.MegaResults.Count; i ++) 
+                    {
+                        var item = ViewBag.MegaResults[i];
+                        <div data-name="@item.ItemName" data-price="@item.Price" class="d-flex align-items-center">
+                            <li class="mx-2">
+                                <a class="link-offset-2 link-opacity-50-hover link-underline link-underline-opacity-0 link-underline-opacity-50-hover" href="@item.Link">
+                                            @item.ItemName
+                                </a>, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency
+                            </li>
+                            <button id="result-@item.Id" class="btn btn-outline-success btn-sm mx-2" onclick="addToCart(@item.Id, '@item.ItemName', '@item.Quantity', '@item.MeasureUnit', '@item.Price', '@item.Link', '@item.Store')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    }
+                </ul>
+            }
+            else 
+            {
+                <p>Mega results not found.</p>
+            }
+
+        </div>
+   </div>
       
     <script>
-        function setQueryValue(name, quantity, unit) {
-            document.getElementById('name_id').value = name;
-            document.getElementById('quantity_id').value = quantity;
-            document.getElementById('unit_id').value = unit;
+        function addToCart(id, itemName, quantity, measureUnit, price, link, store)
+        {
+            let products = localStorage.getItem("cartItems");
+
+            if (products === null)
+            {
+                products = [
+                    {
+                        Id: id,
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link, 
+                        Store: store
+                    }
+                ]
+            }
+            else 
+            {
+                products = JSON.parse(products);
+                products.push(
+                    {
+                        Id: id,
+                        ItemName: itemName, 
+                        Quantity: quantity, 
+                        MeasureUnit: measureUnit, 
+                        Price: price, 
+                        Link: link,
+                        Store: store
+                    }
+                );
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(products));
+
+            const added = document.createElement("i");
+            added.className = "bi bi-check-lg";
+            const removed = document.getElementById(`result-${id}`);
+            removed.replaceWith(added);
         }
 
-    function addToFavorites() {
-    const name = document.getElementById('name_id').value.trim();
-    const quantity = document.getElementById('quantity_id').value.trim();
-    const unit = document.getElementById('unit_id').value;
-
-    if (!name || !quantity || !unit) {
-        alert('Please fill in all fields to add to favorites.');
-        return;
-    }
-
-    fetch('/Favorites/AddFavorite', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, quantity, unit })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to add favorite');
+        function setQueryValue(query, quantity, unit) {
+            document.getElementById('query').value = query;
+            document.getElementById('quantity').value = quantity;
+            document.getElementById('unit').value = unit;
         }
-        return response.json();
-    })
-    .then(data => {
-        displayFavorite(data);
-    })
-    .catch(error => alert(error.message));
-}
 
-function displayFavorite(favorite) {
-    const favoritesList = document.getElementById('favorites-list');
+        function parseFavorite(buttonText) {
+            // Use a regular expression to extract the parts
+            const match = buttonText.match(/^(.*?) - (\d+) (.+)$/);
 
-    // Create a button for the favorite item
-    const favoriteItem = document.createElement('button');
-    favoriteItem.type = 'button';
-    favoriteItem.className = 'btn btn-outline-light rounded-pill px-4 mx-1';
-    favoriteItem.innerText = `${favorite.name} - ${favorite.quantity} ${favorite.unit}`;
-    favoriteItem.onclick = () => setQueryValue(favorite.name, favorite.quantity, favorite.unit);
+            if (match) {
+                return {
+                    Query: match[1],          // Extracts the query (e.g., "Apples")
+                    Quantity: parseInt(match[2], 10), // Extracts the quantity (e.g., 5)
+                    Unit: match[3]            // Extracts the unit (e.g., "kg")
+                };
+            } else {
+                throw new Error("String format is invalid");
+            }
+        }
 
-    // Add the button to the favorites list
-    favoritesList.appendChild(favoriteItem);
-}
+        function deleteFromFavorites(query, quantity, unit) {
+            let favorites = localStorage.getItem("favorites");
+            if (favorites === null) {
+                Error("Nothing to delete.");
+                return;
+            }
 
-    </script>
-   <div>
-        <p>Try most popular searches:</p>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Apa', '1.5', 'liter')">
-            Apa
-        </button>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Paine', '600', 'grams')">
-            Paine
-        </button>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4 mx-1" onclick="setQueryValue('Lapte', '500', 'ml')">
-            Lapte
-        </button>
-    </div>
+            favorites = JSON.parse(favorites);
+            newFavorites = [];
+            let deleted = false;
 
-<div class="container mt-4">
-    <form asp-controller="Product" asp-action="SearchBoth" method="post" class="row g-3 align-items-center">
-        <div class="col-auto">
-            <input type="text" id="name_id" name="query" class="form-control" placeholder="Nume produs...">
-        </div>
-        <div class="col-auto">
-            <input type="text" id="quantity_id" name="quantity" class="form-control" placeholder="Cantitate (ex. 1.5 sau 1,5)">
-        </div>
-        <div class="col-auto">
-            <select id="unit_id" name="items[0].Unit" class="form-select" required>
-                <option value="liter">liter</option>
-                <option value="ml">ml</option>
-                <option value="pieces">piece</option>
-                <option value="grams">gram</option>
-                <option value="kg">kg</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <button type="button" class="btn btn-success mb-3" onclick="addToFavorites()">Save to Favorites</button>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary mb-3">Caută</button>
-        </div>
-    </form>
-</div>
-
-<!-- Favorites List -->
-<div class="container mt-4">
-    <h5>Favorites:</h5>
-    <div id="favorites-list" class="d-flex flex-wrap gap-2">
-        <!-- Favorite items will appear here -->
-    </div>
-</div>
-
-        <!-- Results Section -->
-        <div class="results-container mt-5">
-            <div class="results">
-                <h2><a href="javascript:void(0)" onclick="redirectToMaps('Carrefour')">Carrefour</a></h2>
-                @if (ViewBag.CarrefourResults is List<MDS_PROJECT.Models.Product> carrefourResults && carrefourResults.Any())
+            for (let favorite of favorites)
+            {
+                if (favorite.Query == query && favorite.Quantity == quantity && favorite.Unit == unit)
                 {
-                    <div class="mb-3">
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByPrice()">Sort by Price</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByName()">Sort by Name</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortCarrefourResultsByQuantity()">Sort by Quantity</button>
-                    </div>
-                    <ul id="carrefour-results" class="product-list">
-                        @foreach (var item in ViewBag.CarrefourResults)
-                        {
-                            <li class="carrefour-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price @item.Currency</li>
-                        }
-                    </ul>
+                    deleted = true;
+                    continue;
                 }
-                else
-                {
-                    <p class="no-results">Nu s-au găsit rezultate pentru Carrefour.</p>
-                }
-            </div>
+                newFavorites.push(favorite);
+            }
 
-            <div class="results">
-                <h2><a href="javascript:void(0)" onclick="redirectToMaps('Kaufland')">Kaufland</a></h2>
-                @if (ViewBag.KauflandResults is List<MDS_PROJECT.Models.Product> kauflandResults && kauflandResults.Any())
-                {
-                    <div class="mb-3">
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByPrice()">Sort by Price</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByName()">Sort by Name</button>
-                        <button class="btn btn-secondary btn-sm" onclick="sortKauflandResultsByQuantity()">Sort by Quantity</button>
-                    </div>
-                    <ul id="kaufland-results" class="product-list">
-                        @foreach (var item in ViewBag.KauflandResults)
-                        {
-                            <li class="kaufland-item" data-quantity="@item.Quantity" data-price="@item.Price">@item.ItemName, @item.Quantity @item.MeasureUnit, @item.Price Lei</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="no-results">Nu s-au găsit rezultate pentru Kaufland.</p>
-                }
-            </div>
-        </div>
-    </div>
+            if (!deleted)
+            {
+                Error("No item found.");
+                return;
+            }
 
-    <script>
-        function setQueryValue(name, quantity) {
-            document.getElementById('name_id').value = name;
-            document.getElementById('quantity_id').value = quantity;
+            localStorage.setItem("favorites", JSON.stringify(newFavorites));
+            displayFavorites();
+
         }
 
-        function redirectToMaps(store) {
-            window.location.href = "/Maps?store=" + store;
+        function addToFavorites() {
+            const query = document.getElementById('query').value.trim();
+            const quantity = document.getElementById('quantity').value.trim();
+            const unit = document.getElementById('unit').value;
+
+            if (!query || !quantity || !unit) {
+                alert('Please fill in all fields to add to favorites.');
+                return;
+            }
+
+            let favorites = localStorage.getItem("favorites");
+            if (favorites === null)
+            {
+                favorites = [
+                    {Query: query, Quantity: quantity, Unit: unit}
+                ];
+            }
+            else 
+            {
+                favorites = JSON.parse(favorites);
+                if (favorites.length >= 3) {
+                    Error("You cannot add more than 3 items in favorites!");
+                    return;
+                }
+                favorites.push({Query: query, Quantity: quantity, Unit: unit});
+            }
+            localStorage.setItem("favorites", JSON.stringify(favorites));
+
+            displayFavorites();
+        }
+        function deleteButton() {
+            // Get the main button and the container div
+            const button = document.getElementById("delete-button");
+            const favoritesList = document.getElementById("favorites-list");
+
+            // Determine the new class and text based on the current state of the main button
+            const isDark = button.classList.contains("btn-outline-dark");
+            const oldClass = isDark ? "btn-outline-dark" : "btn-outline-danger";
+            const newClass = isDark ? "btn-outline-danger" : "btn-outline-dark";
+            const newHtml = isDark ? "<i class=\"bi bi-trash3-fill\"></i>" : "<i class=\"bi bi-x-lg\"></i>";
+
+            // Update the main button
+            button.classList.remove(oldClass);
+            button.classList.add(newClass);
+            button.innerHTML = newHtml;
+
+
+            displayFavorites();
         }
 
-        function getPriceValue(itemText) {
-            var numbers = itemText.match(/\d+([.,]\d+)?/g);
-            return parseFloat(numbers[numbers.length - 1].replace(",", "."));
-        }
+        function displayFavorites() {
+            let favorites = localStorage.getItem("favorites");
 
-        function getQuantityValue(itemText) {
-            var numbers = itemText.match(/\d+([.,]\d+)?/g);
-            return parseFloat(numbers[numbers.length - 2].replace(",", "."));
+            if (favorites === null)
+                return;
+            favorites = JSON.parse(favorites);
+
+            const button = document.getElementById("delete-button");
+            const favoritesList = document.getElementById('favorites-list');
+            favoritesList.innerHTML = "";
+
+            const isDark = button.classList.contains("btn-outline-dark");
+            const Class = isDark ? "btn-outline-danger" : "btn-outline-dark";
+
+            // Create a button for the favorite item
+            for (let favorite of favorites) {
+                const favoriteItem = document.createElement('button');
+                favoriteItem.type = 'button';
+                favoriteItem.className = `btn ${Class} rounded-pill px-4 mx-1`;
+                favoriteItem.innerText = `${favorite.Query} - ${favorite.Quantity} ${favorite.Unit}`;
+                favoriteItem.onclick = isDark ? () => deleteFromFavorites(favorite.Query, favorite.Quantity, favorite.Unit)
+                    : () => setQueryValue(favorite.Query, favorite.Quantity, favorite.Unit);
+
+                // Add the button to the favorites list
+                favoritesList.appendChild(favoriteItem);
+            }
         }
 
         var carrefourSortByPriceAsc = true;
         var carrefourSortByNameAsc = true;
-        var carrefourSortByQuantityAsc = true;
+        var auchanSortByPriceAsc = true;
+        var auchanSortByNameAsc = true;
 
-        function sortCarrefourResultsByPrice() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var priceA = getPriceValue(a.innerText);
-                var priceB = getPriceValue(b.innerText);
-                return carrefourSortByPriceAsc ? priceA - priceB : priceB - priceA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
+        function sortResults(criterium, store) {
+            var ul = document.getElementById(`${store}-results`);
+            let array = Array.from(ul.children);
+
+            if (criterium === 0) // by price
+            {
+                array.sort((a, b) => {
+                    const aVal = Number(a.getAttribute("data-price"));
+                    const bVal = Number(b.getAttribute("data-price"));
+
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByPriceAsc ? aVal - bVal : bVal - aVal;
+                    else 
+                        return auchanSortByPriceAsc ? aVal - bVal : bVal - aVal;
+
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
+                else 
+                    auchanSortByPriceAsc = !auchanSortByPriceAsc;
+            } 
+            else if (criterium === 1) // by name
+            {
+                array.sort((a, b) => {
+                    const aVal = a.getAttribute("data-name");
+                    const bVal = b.getAttribute("data-name");
+                    if (store.localeCompare("carrefour"))
+                        return carrefourSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    else
+                        return auchanSortByNameAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                });
+
+                if (store.localeCompare("carrefour"))
+                    carrefourSortByNameAsc = !carrefourSortByNameAsc;
+                else 
+                    auchanSortByNameAsc = !auchanSortByNameAsc;
+            } 
+
+            for (var item of array)
+            {
+                ul.appendChild(item);
             }
-            carrefourSortByPriceAsc = !carrefourSortByPriceAsc;
         }
 
-        function sortCarrefourResultsByName() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var nameA = a.innerText.split(",")[0].trim();
-                var nameB = b.innerText.split(",")[0].trim();
-                return carrefourSortByNameAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByNameAsc = !carrefourSortByNameAsc;
-        }
-
-        function sortCarrefourResultsByQuantity() {
-            var ul = document.getElementById("carrefour-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var quantityA = getQuantityValue(a.innerText);
-                var quantityB = getQuantityValue(b.innerText);
-                return carrefourSortByQuantityAsc ? quantityA - quantityB : quantityB - quantityA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            carrefourSortByQuantityAsc = !carrefourSortByQuantityAsc;
-        }
-
-        var kauflandSortByPriceAsc = true;
-        var kauflandSortByNameAsc = true;
-        var kauflandSortByQuantityAsc = true;
-
-        function sortKauflandResultsByPrice() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var priceA = getPriceValue(a.innerText);
-                var priceB = getPriceValue(b.innerText);
-                return kauflandSortByPriceAsc ? priceA - priceB : priceB - priceA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByPriceAsc = !kauflandSortByPriceAsc;
-        }
-
-        function sortKauflandResultsByName() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var nameA = a.innerText.split(",")[0].trim();
-                var nameB = b.innerText.split(",")[0].trim();
-                return kauflandSortByNameAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByNameAsc = !kauflandSortByNameAsc;
-        }
-
-        function sortKauflandResultsByQuantity() {
-            var ul = document.getElementById("kaufland-results");
-            var items = ul.getElementsByTagName("li");
-            var sortedItems = Array.from(items).sort(function (a, b) {
-                var quantityA = getQuantityValue(a.innerText);
-                var quantityB = getQuantityValue(b.innerText);
-                return kauflandSortByQuantityAsc ? quantityA - quantityB : quantityB - quantityA;
-            });
-            for (var i = 0; i < sortedItems.length; i++) {
-                ul.appendChild(sortedItems[i]);
-            }
-            kauflandSortByQuantityAsc = !kauflandSortByQuantityAsc;
-        }
-    }
-
+        document.addEventListener('DOMContentLoaded', () => {
+            displayFavorites();
+        });
     </script>
-</body>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('/Favorites/GetFavorites')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load favorites');
-                }
-                return response.json();
-            })
-            .then(favorites => {
-                favorites.forEach(displayFavorite);
-            })
-            .catch(error => console.error('Error fetching favorites:', error));
-    });
-</script>
-</html>
+</section>
