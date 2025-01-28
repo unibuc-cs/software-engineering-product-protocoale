@@ -6,9 +6,9 @@
 
 - **Voinescu David-Ioan**
 - **Ghena-Ionescu Alexandru**
-- **Uta Mario Ernest**
-- **Milosi Elias**
-- **Vlad Steopoaie**
+- **Uță Mario-Ernest**
+- **Milosi Elias-Ricardo**
+- **Șteopoaie Vlad-Dorin**
 
 # Product Vision
 
