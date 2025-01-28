@@ -8,6 +8,23 @@ defer
 async
 >
 </script>
+<div id="error-popup" 
+     style="display: none; 
+            width: 300px; 
+            padding: 20px; 
+            position: absolute; 
+            top: 150%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background-color: red; 
+            color: white; 
+            font-size: 18px; 
+            text-align: center; 
+            border-radius: 10px; 
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); 
+            z-index: 1000;">
+    Invalid Address
+</div>
 
 <!-- Hero Section -->
 <section id="hero" class="hero bg-light text-center">
@@ -18,7 +35,8 @@ async
       Add your address for the best nearby experience!
     </p>
     <a href="/Product" class="btn btn-primary btn-lg mx-auto my-2">Shop Now</a>
-    <a href="#map-section" class="btn btn-primary btn-lg mx-auto my-2">Add address</a>
+    <input class="btn btn-primary btn-lg mx-auto my-2" id="adress-input" type="text" placeholder="Ex. Street Carei Nr.5"/>
+    <a onclick="initMap('Carrefour')" href="#map-section" class="btn btn-primary btn-lg mx-auto my-2">Add address</a>
   </div>
 </section>
 
@@ -102,6 +120,8 @@ async
             mapTypeControl: false
         });
 
+        const userAdrress = document.getElementById("adress-input").value;
+
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
         directionsRenderer.setMap(map);
@@ -110,10 +130,14 @@ async
             console.error('Store parameter is missing in the URL');
             return;
         }
-
-        const storedAddress = localStorage.getItem("userAddress");
+        
+        let storedAddress = localStorage.getItem("userAddress");
+        if(userAdrress != "") {
+            storedAddress = userAdrress;
+            localStorage.setItem("userAddress", userAdrress);
+        }
         if (storedAddress) {
-            geocodeAddress(storedAddress, store);
+            geocodeAddress(storedAddress, store, (error) => displayErrorPopup(error.message));
         } else {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function (position) {
@@ -146,14 +170,20 @@ async
          return decodeURIComponent(results[2].replace(/\+/g, ' '));
      }
 
-    function geocodeAddress(address, store) {
+    function geocodeAddress(address, store, onError) {
+        const DEFAULT_LOCATION = {"lat": 44.4351979, "lng": 26.0996322}
         const geocoder = new google.maps.Geocoder();
         geocoder.geocode({ 'address': address }, function (results, status) {
             if (status === 'OK') {
                 const userLocation = results[0].geometry.location;
                 setUserLocation(userLocation, store);
             } else {
+                setUserLocation(DEFAULT_LOCATION, store);
                 console.error('Geocode was not successful for the following reason: ' + status);
+                if (onError) {
+                    onError(new Error("Location not found"));
+                }
+
             }
         });
     }
@@ -249,6 +279,18 @@ async
             'Error: The Geolocation service failed.' :
             'Error: Your browser doesn\'t support geolocation.');
         map.setCenter(pos);
+    }
+
+    function displayErrorPopup(message) {
+        localStorage.removeItem("userAddress");
+        const popup = document.getElementById("error-popup");
+        popup.innerText = message;
+        popup.style.display = "block";
+
+        // Hide the pop-up after 3 seconds
+        setTimeout(() => {
+            popup.style.display = "none";
+        }, 3000);
     }
 
     initMap();
