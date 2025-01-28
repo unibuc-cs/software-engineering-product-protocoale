@@ -23,7 +23,7 @@ pip install tk
 ```
 python3 alternative_shopper
 ```
-Make sure the input file should be .txt and has the following format:
+Make sure the input file is .txt and has the following format:
 
 ```
 {proudct_link_1}
