@@ -9,20 +9,7 @@ async
 >
 </script>
 <div id="error-popup" 
-     style="display: none; 
-            width: 300px; 
-            padding: 20px; 
-            position: absolute; 
-            top: 150%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            background-color: red; 
-            color: white; 
-            font-size: 18px; 
-            text-align: center; 
-            border-radius: 10px; 
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); 
-            z-index: 1000;">
+     class="error-popup">
     Invalid Address
 </div>
 
@@ -35,7 +22,11 @@ async
       Add your address for the best nearby experience!
     </p>
     <a href="/Product" class="btn btn-primary btn-lg mx-auto my-2">Shop Now</a>
-    <input class="btn btn-primary btn-lg mx-auto my-2" id="adress-input" type="text" placeholder="Ex. Street Carei Nr.5"/>
+    <!-- <input class="btn btn-primary btn-lg mx-auto my-2" id="adress-input" type="text" placeholder=""/> -->
+    <div class="address-field my-4">
+        <input id="address-input" class="address-input text-light" type="text" placeholder="Ex. Street Carei Nr.5"/> 
+        <div class="address-line"></div>
+    </div>
     <a onclick="initMap('Carrefour')" href="#map-section" class="btn btn-primary btn-lg mx-auto my-2">Add address</a>
   </div>
 </section>
@@ -120,7 +111,7 @@ async
             mapTypeControl: false
         });
 
-        const userAdrress = document.getElementById("adress-input").value;
+        const userAdrress = document.getElementById("address-input").value;
 
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();

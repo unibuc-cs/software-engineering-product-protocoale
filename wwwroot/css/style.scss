@@ -85,3 +85,79 @@ footer {
     margin: 0;
   }
 }
+
+.error-popup {
+  display: none; 
+  width: 300px; 
+  padding: 20px; 
+  position: absolute; 
+  top: 150%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  background-color: red; 
+  color: white; 
+  font-size: 18px; 
+  text-align: center; 
+  border-radius: 10px; 
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); 
+  z-index: 1000;
+}
+
+
+.address-input {
+  text-align: center;
+  background: 0;
+  border: 0;
+  outline: none;
+  width: 100%;
+  font-size: 1.5em;
+  transition: padding 0.3s 0.2s ease;
+  
+  &:focus {
+    padding-bottom: 5px;
+  }
+
+  // sibling magic ;o
+  &:focus + .address-line {
+    &:after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+.address-field {
+  position: relative;
+  
+  .address-line {
+    width: 100%;
+    height: 3px;
+    position: absolute;
+    bottom: -8px;
+    background: $dark;
+    // background: $secondary;
+    
+    &:after {
+      content: " ";
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      
+      transform: scalex(0);
+      transition: transform 0.3s ease;
+      
+      background: $primary;
+    }
+  }
+}
+
+/* Remove the arrows in number input fields */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
