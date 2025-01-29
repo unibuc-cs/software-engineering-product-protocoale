@@ -4,11 +4,11 @@
 
 ## **Team Members**
 
-- **Voinescu David-Ioan**
-- **Ghena-Ionescu Alexandru**
-- **Uta Mario Ernest**
-- **Milosi Elias**
-- **Vlad Steopoaie**
+- **Alexandru Ghena-Ionescu**
+- **Elias-Ricardo Milosi**
+- **Vlad-Dorin Șteopoaie**
+- **Mario-Ernest Uță**
+- **David-Ioan Voinescu**
 
 # Product Vision
 
