@@ -37,13 +37,14 @@ def get_product_info(query, exact):
         for name, price_amount, product_url  in products:
 
             # Append product information to the list
-            if exact:
-                if query.lower() in name.lower().split():
+            if len(name) > 0:
+                if exact:
+                    if query.lower() in name.lower().split():
+                        product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
+                else:
                     product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
-            else:
-                product_info.append({'name': name, 'price': price_amount,'product_url':product_url})
 
-        return product_info
+        return (None if product_info == [] else product_info)
     else:
         # Handle failed HTTP request
         return None
