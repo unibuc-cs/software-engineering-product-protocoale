@@ -5,7 +5,7 @@
 ## **Team Members**
 
 - **Alexandru Ghena-Ionescu**
-- **Elias-Ricardo Milosi**
+- **Elias Milosi**
 - **Vlad-Dorin Șteopoaie**
 - **Mario-Ernest Uță**
 - **David-Ioan Voinescu**
