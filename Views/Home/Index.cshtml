@@ -47,9 +47,9 @@ async
         </div>  
     </div>
     <div class="d-flex justify-content-around"> <!-- Some basic style for layout -->
-        <a class="btn btn-primary" href="#map-section" onclick="initMap('Carrefour')">Find Carrefour Stores</a>
-        <a class="btn btn-primary" href="#map-section" onclick="initMap('Auchan')">Find Auchan Stores</a> 
-        <a class="btn btn-primary" href="#map-section" onclick="initMap('Mega')">Find Mega Stores</a>
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Carrefour', false)">Find Carrefour Stores</a>
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Auchan', false)">Find Auchan Stores</a> 
+        <a class="btn btn-primary" href="#map-section" onclick="initMap('Mega', false)">Find Mega Stores</a>
     </div>
 </section>
 
@@ -99,11 +99,11 @@ async
     let directionsRenderer;
     let markersArray = [];
 
-    window.initMap = function (store="Carrefour", event) {
+    window.initMap = function (store="Carrefour", isDefault=true, event) {
         if (event)
             event.preventDefault();
         url = getParameterByName("store");
-        if(url != null) {
+        if(url != null && isDefault) {
             store = url;
         }
         map = new google.maps.Map(document.getElementById('map'), {
