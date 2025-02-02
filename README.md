@@ -4,11 +4,11 @@
 ## Demo: https://www.youtube.com/watch?v=WhruKTJylHE
 ## **Team Members**
 
-- **Voinescu David-Ioan**
-- **Ghena-Ionescu Alexandru**
-- **Uta Mario Ernest**
-- **Milosi Elias**
-- **Vlad Steopoaie**
+- **Alexandru Ghena-Ionescu**
+- **Elias Milosi**
+- **Vlad-Dorin Șteopoaie**
+- **Mario-Ernest Uță**
+- **David-Ioan Voinescu**
 
 # Product Vision
 
